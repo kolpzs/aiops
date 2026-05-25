@@ -1,0 +1,7 @@
+{
+  "title": "Conflito de porta entre containers",
+  "description": "Dois containers Docker tentam bind na mesma porta externa (5055), causando falha no segundo container durante o apply.",
+  "steps": ["init", "apply"],
+  "tcc_relation": "Simula um erro real de infraestrutura: conflito de recursos de rede ao escalar serviços. Testa se a IA identifica que o problema é a duplicação de porta e sugere usar portas distintas.",
+  "presentation_note": "Demonstra um cenário realista de deploy de microserviços onde a IA precisa entender a topologia de rede dos containers."
+}

@@ -1,0 +1,7 @@
+{
+  "title": "Container com variável de ambiente ausente",
+  "description": "O Terraform sobe um container Docker com uma app Flask que exige DATABASE_HOST. A variável não é passada, causando crash no startup do container.",
+  "steps": ["init", "apply"],
+  "tcc_relation": "Demonstra a capacidade do método de analisar logs de aplicação (não apenas IaC) quando o Terraform provisiona um container que falha. Valida H2: o modelo consegue cruzar o código Terraform com o log da app para sugerir a correção.",
+  "presentation_note": "Cenário impactante para a banca: mostra a IA analisando logs de container Docker, indo além de erros de sintaxe Terraform."
+}

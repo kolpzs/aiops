@@ -1,0 +1,7 @@
+{
+  "title": "Dependência Python inexistente no build",
+  "description": "O Dockerfile da aplicação tenta instalar um pacote Python que não existe (flask-inexistente-xyz), causando falha no build da imagem Docker durante o apply do Terraform.",
+  "steps": ["init", "apply"],
+  "tcc_relation": "Representa falha na cadeia de build de aplicações: um erro de dependência que impede a criação da imagem Docker. Valida se a IA consegue distinguir entre erro de IaC e erro de build de aplicação.",
+  "presentation_note": "Cenário que mostra a IA analisando logs de pip install/Docker build — um nível mais profundo de análise que impressiona a banca."
+}

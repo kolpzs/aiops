@@ -12,6 +12,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import shutil
 import signal
 import socket
@@ -198,6 +199,47 @@ def run_terraform_step(scenario_path: str, step: str) -> dict:
     }
 
 
+def _docker_cmd() -> list[str]:
+    """Return docker command with correct socket if Docker Desktop context is active."""
+    default_sock = "/var/run/docker.sock"
+    desktop_sock = os.path.expanduser("~/.docker/desktop/docker.sock")
+    # Se Docker Desktop estiver ativo, o Terraform usa o socket padrão
+    if os.path.exists(desktop_sock) and os.path.exists(default_sock):
+        return ["docker", "-H", f"unix://{default_sock}"]
+    return ["docker"]
+
+
+def get_docker_container_logs(container_name: str) -> str:
+    """Capture logs from a Docker container (running or stopped)."""
+    try:
+        cmd = _docker_cmd() + ["logs", container_name]
+        result = subprocess.run(
+            cmd,
+            capture_output=True, text=True, check=False, timeout=10,
+        )
+        logs = ""
+        if result.stdout.strip():
+            logs += f"--- STDOUT ---\n{result.stdout.strip()}\n"
+        if result.stderr.strip():
+            logs += f"--- STDERR ---\n{result.stderr.strip()}\n"
+        return logs or "(sem logs)"
+    except Exception:
+        return "(não foi possível capturar logs do container)"
+
+
+def terraform_cleanup(scenario_path: str) -> str:
+    """Run terraform destroy to clean up resources."""
+    env = os.environ.copy()
+    env["TF_IN_AUTOMATION"] = "1"
+    result = subprocess.run(
+        ["terraform", "destroy", "-auto-approve", "-no-color"],
+        cwd=scenario_path, capture_output=True, text=True, env=env, check=False, timeout=60,
+    )
+    if result.returncode == 0:
+        return "✅ Recursos limpos com terraform destroy"
+    return f"⚠️ Cleanup parcial (exit {result.returncode})"
+
+
 def build_prompt(scenario: dict, tf_code: str, exec_log: str) -> str:
     criteria = "\n".join(f"- {n}: {d}" for n, d in EVALUATION_CRITERIA)
     hyps = "\n".join(f"- {c}: {t}" for c, t in HYPOTHESES)
@@ -367,8 +409,29 @@ def execute_scenario(
     exec_log = "\n\n".join(exec_log_parts)
     status_str = f"failure-captured:{failed_step}" if failed_step else "unexpected-success"
 
+    # Check for Docker container logs (scenarios 04+)
+    uses_docker = "docker" in scenario.get("tf_code", "").lower() and "docker_container" in scenario.get("tf_code", "")
+    container_logs = ""
+    if uses_docker:
+        log_container.write("🐳 Verificando logs dos containers...")
+        time.sleep(4)  # Aguarda container crashar
+        container_names = re.findall(r'name\s*=\s*"(tcc-mvp-[^"]+)"', scenario.get("tf_code", ""))
+        for cname in container_names:
+            clogs = get_docker_container_logs(cname)
+            if clogs and clogs != "(sem logs)":
+                container_logs += f"\n[CONTAINER: {cname}]\n{clogs}"
+        if container_logs:
+            exec_log += f"\n\n--- LOGS DOS CONTAINERS ---{container_logs}"
+            log_container.markdown("**🐳 Logs dos containers Docker capturados**")
+            # Se Terraform passou mas container crashou, marcar como falha de aplicação
+            if not failed_step and ("FATAL" in container_logs or "Error" in container_logs or "error" in container_logs):
+                status_str = "app-failure-captured:container-crash"
+                log_container.success("✅ Falha de aplicação detectada via logs do container")
+
     if failed_step:
         log_container.success(f"✅ Falha capturada na etapa: **{failed_step}** ({tf_elapsed:.1f}s)")
+    elif "app-failure" in status_str:
+        pass  # já mostrou a mensagem acima
     else:
         log_container.warning("⚠️ Nenhuma falha detectada (inesperado)")
 
@@ -406,6 +469,12 @@ def execute_scenario(
 
     report_path = save_report(scenario, status_str, scenario["tf_code"], exec_log, ai_response)
     log_container.info(f"📄 Relatório: `{report_path.relative_to(ROOT)}`")
+
+    # Cleanup Docker resources
+    if uses_docker:
+        log_container.write("🧹 Limpando recursos Docker...")
+        cleanup_msg = terraform_cleanup(scenario["path"])
+        log_container.write(cleanup_msg)
 
     csv_row = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
