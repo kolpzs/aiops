@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import csv
 import json
+import logging
 import os
 import re
 import shutil
@@ -25,6 +26,16 @@ from datetime import datetime
 from pathlib import Path
 
 import streamlit as st
+
+# ---------------------------------------------------------------------------
+# Terminal logger — always visible in the terminal running Streamlit
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s │ %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger("aiops")
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -373,12 +384,12 @@ def _init_activity_log():
 
 
 def add_activity(icon: str, message: str):
-    """Add an entry to the activity log."""
+    """Add an entry to the activity log (UI + terminal)."""
     _init_activity_log()
     ts = datetime.now().strftime("%H:%M:%S")
     st.session_state.activity_log.insert(0, {"time": ts, "icon": icon, "message": message})
-    # Keep only last 100 entries
-    st.session_state.activity_log = st.session_state.activity_log[:100]
+    st.session_state.activity_log = st.session_state.activity_log[:200]
+    logger.info(f"{icon} {message}")
 
 
 def render_activity_log_tab():
@@ -420,9 +431,11 @@ def execute_scenario(
     Returns a result dict suitable for CSV.
     """
     log_container.markdown(f"#### 📁 Cenário: **{scenario['slug']}** — {scenario['title']}")
+    add_activity("📁", f"Iniciando cenário: {scenario['slug']}")
 
     # Phase 1: Terraform
     log_container.markdown("**🔧 Terraform pipeline**")
+    add_activity("🔧", f"[{scenario['slug']}] Terraform pipeline iniciado")
     t0_tf = time.time()
     failed_step = None
     exec_log_parts = []
@@ -440,10 +453,12 @@ def execute_scenario(
 
         if result["returncode"] != 0:
             log_container.write(f"❌ Falha em `terraform {step}` (exit {result['returncode']})")
+            add_activity("❌", f"[{scenario['slug']}] terraform {step} — FALHOU (exit {result['returncode']})")
             failed_step = step
             break
         else:
             log_container.write(f"✅ `terraform {step}` OK")
+            add_activity("✅", f"[{scenario['slug']}] terraform {step} — OK")
 
     tf_elapsed = time.time() - t0_tf
     exec_log = "\n\n".join(exec_log_parts)
@@ -484,8 +499,10 @@ def execute_scenario(
         ok_now, _ = check_ollama(ollama_url)
         if not ok_now:
             log_container.warning("⚠️ Ollama offline — relatório salvo sem IA.")
+            add_activity("⚠️", f"[{scenario['slug']}] Ollama offline — IA ignorada")
         else:
             log_container.markdown("**🤖 Análise com IA em andamento...**")
+            add_activity("🤖", f"[{scenario['slug']}] Enviando prompt para {model}...")
             prompt = build_prompt(scenario, scenario["tf_code"], exec_log)
             full_response = ""
 
@@ -563,25 +580,31 @@ def execute_scenario(
                 sections_found = [s for s, _ in _SECTIONS]  # all done
                 _update_live_display(ai_elapsed, tokens_est, "")
                 status_box.success(f"✅ IA concluída em {ai_elapsed:.0f}s — {tokens_est} tokens ({tok_s:.1f} tok/s)")
+                add_activity("🤖", f"[{scenario['slug']}] IA concluída — {tokens_est} tokens em {ai_elapsed:.0f}s ({tok_s:.1f} tok/s)")
 
             except (TimeoutError, socket.timeout):
                 elapsed = time.time() - t0_ai
                 progress_bar.progress(1.0, text=f"⏱️ Timeout após {elapsed:.0f}s")
                 log_container.error(f"⏱️ Timeout ({timeout}s). Resposta parcial ({token_count} tokens) salva.")
+                add_activity("⏱️", f"[{scenario['slug']}] IA timeout após {elapsed:.0f}s ({token_count} tokens parciais)")
                 if full_response:
                     ai_response = full_response + "\n\n*(resposta interrompida por timeout)*"
                     tokens_est = token_count
             except Exception as exc:
                 log_container.error(f"❌ Erro: {exc}")
+                add_activity("💥", f"[{scenario['slug']}] Erro na IA: {exc}")
     else:
         log_container.info("ℹ️ IA ignorada (modo --skip-llm)")
+        add_activity("⏭️", f"[{scenario['slug']}] IA ignorada (skip-llm)")
 
     report_path = save_report(scenario, status_str, scenario["tf_code"], exec_log, ai_response)
     log_container.info(f"📄 Relatório: `{report_path.relative_to(ROOT)}`")
+    add_activity("📄", f"[{scenario['slug']}] Relatório salvo: {report_path.name}")
 
     # Cleanup Docker resources
     if uses_docker:
         log_container.write("🧹 Limpando recursos Docker...")
+        add_activity("🧹", f"[{scenario['slug']}] Limpando recursos Docker")
         cleanup_msg = terraform_cleanup(scenario["path"])
         log_container.write(cleanup_msg)
 
