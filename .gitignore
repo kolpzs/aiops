@@ -3,6 +3,9 @@
 *.tfstate
 *.tfstate.*
 __pycache__/
-relatorios/
+relatorios/*.md
+relatorios/resumo_execucao.json
+# Keep resultados.csv tracked
+!relatorios/resultados.csv
 .streamlit/
 *.pyc
