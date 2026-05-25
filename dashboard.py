@@ -670,6 +670,13 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
 # UI: Tab - Results & Charts
 # ---------------------------------------------------------------------------
 def render_results_tab():
+    try:
+        import plotly.graph_objects as go
+        import plotly.express as px
+        HAS_PLOTLY = True
+    except ImportError:
+        HAS_PLOTLY = False
+
     st.subheader("📊 Resultados e Gráficos")
 
     data = load_csv_results()
@@ -677,11 +684,239 @@ def render_results_tab():
         st.info("Nenhuma execução registrada ainda. Execute cenários para gerar dados.")
         return
 
-    # Convert to use in charts
-    st.markdown("### 📋 Histórico de execuções")
+    ai_rows = [r for r in data if r.get("ia_executada") == "sim"]
+    all_rows = data
+
+    # --- Metrics row ---
+    st.markdown("### 📈 Métricas gerais")
+    m1, m2, m3, m4, m5 = st.columns(5)
+    with m1:
+        st.metric("Total execuções", len(all_rows))
+    with m2:
+        st.metric("Com IA", len(ai_rows))
+    with m3:
+        pct = f"{100 * len(ai_rows) / len(all_rows):.0f}%" if all_rows else "0%"
+        st.metric("Taxa com IA", pct)
+    with m4:
+        if ai_rows:
+            avg_ai = sum(float(r["tempo_ia_s"]) for r in ai_rows) / len(ai_rows)
+            st.metric("Tempo médio IA (s)", f"{avg_ai:.1f}")
+        else:
+            st.metric("Tempo médio IA (s)", "N/A")
+    with m5:
+        if ai_rows:
+            avg_tokens = sum(int(r["tokens_estimados"]) for r in ai_rows) / len(ai_rows)
+            st.metric("Tokens médio", f"{avg_tokens:.0f}")
+        else:
+            st.metric("Tokens médio", "N/A")
+
+    st.markdown("---")
+
+    # ── CHART 1: Proporção IA vs Sem IA (pizza) ─────────────────────────────
+    st.markdown("### 🥧 1. Proporção de execuções com / sem IA")
+    with_ia = len(ai_rows)
+    without_ia = len(all_rows) - with_ia
+    if HAS_PLOTLY:
+        fig_pie = go.Figure(data=[go.Pie(
+            labels=["Com IA ✅", "Sem IA ⚪"],
+            values=[with_ia, without_ia],
+            hole=0.45,
+            marker_colors=["#4CAF50", "#9E9E9E"],
+            textinfo="label+percent",
+        )])
+        fig_pie.update_layout(
+            margin=dict(t=20, b=20, l=20, r=20),
+            height=300,
+            showlegend=True,
+            legend=dict(orientation="h", x=0.3, y=-0.1),
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+    else:
+        st.bar_chart({"Com IA": with_ia, "Sem IA": without_ia})
+
+    st.markdown("---")
+
+    # ── CHART 2: Falhas por etapa do pipeline ───────────────────────────────
+    st.markdown("### 🔴 2. Distribuição de falhas por etapa do pipeline")
+    etapas: dict[str, int] = {}
+    for r in all_rows:
+        raw = r.get("etapa_falha", "desconhecido") or "desconhecido"
+        # normalise "failure-captured:init" → "init"
+        etapa = raw.split(":")[-1] if ":" in raw else raw
+        etapas[etapa] = etapas.get(etapa, 0) + 1
+
+    if HAS_PLOTLY:
+        sorted_etapas = sorted(etapas.items(), key=lambda x: x[1], reverse=True)
+        color_map = {
+            "init": "#E53935", "validate": "#FB8C00", "plan": "#FDD835",
+            "apply": "#8E24AA", "docker": "#1E88E5", "desconhecido": "#757575",
+        }
+        fig_etapas = go.Figure(go.Bar(
+            x=[e[0] for e in sorted_etapas],
+            y=[e[1] for e in sorted_etapas],
+            marker_color=[color_map.get(e[0], "#607D8B") for e in sorted_etapas],
+            text=[e[1] for e in sorted_etapas],
+            textposition="outside",
+        ))
+        fig_etapas.update_layout(
+            xaxis_title="Etapa",
+            yaxis_title="Nº de ocorrências",
+            height=320,
+            margin=dict(t=20, b=40),
+        )
+        st.plotly_chart(fig_etapas, use_container_width=True)
+    else:
+        st.bar_chart(etapas)
+
+    st.markdown("---")
+
+    # ── CHART 3: Terraform vs IA por cenário (grouped) ──────────────────────
+    st.markdown("### ⚡ 3. Tempo Terraform vs IA por cenário (comparativo)")
+    if ai_rows:
+        cenarios_seen: list[str] = []
+        tf_times: list[float] = []
+        ia_times: list[float] = []
+
+        grouped: dict[str, list] = {}
+        for r in ai_rows:
+            c = r["cenario"]
+            if c not in grouped:
+                grouped[c] = []
+            grouped[c].append(r)
+
+        for c, rows in grouped.items():
+            cenarios_seen.append(c)
+            tf_times.append(sum(float(r["tempo_terraform_s"]) for r in rows) / len(rows))
+            ia_times.append(sum(float(r["tempo_ia_s"]) for r in rows) / len(rows))
+
+        if HAS_PLOTLY:
+            fig_grp = go.Figure(data=[
+                go.Bar(name="Terraform (s)", x=cenarios_seen, y=tf_times, marker_color="#1E88E5"),
+                go.Bar(name="IA (s)", x=cenarios_seen, y=ia_times, marker_color="#43A047"),
+            ])
+            fig_grp.update_layout(
+                barmode="group",
+                xaxis_title="Cenário",
+                yaxis_title="Tempo médio (s)",
+                height=340,
+                margin=dict(t=20, b=60),
+                legend=dict(orientation="h", y=-0.2),
+            )
+            st.plotly_chart(fig_grp, use_container_width=True)
+        else:
+            st.bar_chart({"Terraform (s)": tf_times, "IA (s)": ia_times})
+    else:
+        st.info("Execute cenários com IA para ver este gráfico.")
+
+    st.markdown("---")
+
+    # ── CHART 4: Tokens estimados por modelo ────────────────────────────────
+    st.markdown("### 🔗 4. Tokens médios por modelo")
+    if ai_rows:
+        modelo_tokens: dict[str, list[int]] = {}
+        for r in ai_rows:
+            m = r.get("modelo", "desconhecido") or "desconhecido"
+            modelo_tokens.setdefault(m, []).append(int(r["tokens_estimados"]))
+
+        avg_by_model = {m: sum(v) / len(v) for m, v in modelo_tokens.items()}
+
+        if HAS_PLOTLY:
+            fig_tok = go.Figure(go.Bar(
+                x=list(avg_by_model.keys()),
+                y=list(avg_by_model.values()),
+                marker_color="#7B1FA2",
+                text=[f"{v:.0f}" for v in avg_by_model.values()],
+                textposition="outside",
+            ))
+            fig_tok.update_layout(
+                xaxis_title="Modelo",
+                yaxis_title="Tokens médios",
+                height=300,
+                margin=dict(t=20, b=40),
+            )
+            st.plotly_chart(fig_tok, use_container_width=True)
+        else:
+            st.bar_chart(avg_by_model)
+    else:
+        st.info("Execute cenários com IA para ver este gráfico.")
+
+    st.markdown("---")
+
+    # ── CHART 5: Eficiência (tokens/s) por cenário ──────────────────────────
+    st.markdown("### 🚀 5. Eficiência da IA: tokens gerados por segundo")
+    st.caption("Quanto maior, mais rápido o modelo produziu resposta. Métrica: tokens_estimados / tempo_ia_s")
+    if ai_rows:
+        efic: dict[str, list[float]] = {}
+        for r in ai_rows:
+            c = r["cenario"]
+            t_ia = float(r["tempo_ia_s"])
+            tok = int(r["tokens_estimados"])
+            if t_ia > 0:
+                efic.setdefault(c, []).append(tok / t_ia)
+
+        if efic:
+            avg_efic = {c: sum(v) / len(v) for c, v in efic.items()}
+            sorted_efic = sorted(avg_efic.items(), key=lambda x: x[1], reverse=True)
+
+            if HAS_PLOTLY:
+                fig_eff = go.Figure(go.Bar(
+                    y=[e[0] for e in sorted_efic],
+                    x=[e[1] for e in sorted_efic],
+                    orientation="h",
+                    marker_color="#00ACC1",
+                    text=[f"{e[1]:.1f} tok/s" for e in sorted_efic],
+                    textposition="outside",
+                ))
+                fig_eff.update_layout(
+                    xaxis_title="Tokens por segundo",
+                    height=300,
+                    margin=dict(t=20, b=40, r=100),
+                )
+                st.plotly_chart(fig_eff, use_container_width=True)
+            else:
+                st.bar_chart(avg_efic)
+        else:
+            st.info("Dados insuficientes para calcular eficiência.")
+    else:
+        st.info("Execute cenários com IA para ver este gráfico.")
+
+    st.markdown("---")
+
+    # ── CHART 6: Timeline de execuções (linha dupla) ─────────────────────────
+    if len(all_rows) > 1:
+        st.markdown("### 📅 6. Evolução temporal (Terraform vs IA)")
+        labels = [f"{r['cenario']} {r['timestamp'][11:16]}" for r in all_rows]
+        tf_vals = [float(r["tempo_terraform_s"]) for r in all_rows]
+        ia_vals = [float(r["tempo_ia_s"]) for r in all_rows]
+
+        if HAS_PLOTLY:
+            fig_line = go.Figure()
+            fig_line.add_trace(go.Scatter(
+                x=labels, y=tf_vals, mode="lines+markers",
+                name="Terraform (s)", line=dict(color="#1E88E5", width=2),
+            ))
+            fig_line.add_trace(go.Scatter(
+                x=labels, y=ia_vals, mode="lines+markers",
+                name="IA (s)", line=dict(color="#43A047", width=2),
+            ))
+            fig_line.update_layout(
+                xaxis_title="Execução",
+                yaxis_title="Tempo (s)",
+                height=340,
+                margin=dict(t=20, b=80),
+                legend=dict(orientation="h", y=-0.3),
+                xaxis=dict(tickangle=-30),
+            )
+            st.plotly_chart(fig_line, use_container_width=True)
+        else:
+            st.line_chart({"Terraform (s)": tf_vals, "IA (s)": ia_vals})
+
+    st.markdown("---")
+
+    # --- Tabela histórico + download CSV ---
+    st.markdown("### 📋 Histórico completo de execuções")
     st.dataframe(data, use_container_width=True, hide_index=True)
 
-    # Download CSV
     csv_content = CSV_FILE.read_text(encoding="utf-8")
     st.download_button(
         "⬇️ Baixar CSV completo",
@@ -691,80 +926,7 @@ def render_results_tab():
         use_container_width=True,
     )
 
-    st.markdown("---")
-
-    # Filter only rows with AI executed
-    ai_rows = [r for r in data if r.get("ia_executada") == "sim"]
-    all_rows = data
-
-    # --- Metrics ---
-    st.markdown("### 📈 Métricas gerais")
-    m1, m2, m3, m4 = st.columns(4)
-    with m1:
-        st.metric("Total execuções", len(all_rows))
-    with m2:
-        st.metric("Com IA", len(ai_rows))
-    with m3:
-        if ai_rows:
-            avg_ai = sum(float(r["tempo_ia_s"]) for r in ai_rows) / len(ai_rows)
-            st.metric("Tempo médio IA (s)", f"{avg_ai:.1f}")
-        else:
-            st.metric("Tempo médio IA (s)", "N/A")
-    with m4:
-        if ai_rows:
-            avg_tokens = sum(int(r["tokens_estimados"]) for r in ai_rows) / len(ai_rows)
-            st.metric("Tokens médio", f"{avg_tokens:.0f}")
-        else:
-            st.metric("Tokens médio", "N/A")
-
-    st.markdown("---")
-
-    # --- Chart: Tempo por cenário ---
-    if ai_rows:
-        st.markdown("### ⏱️ Tempo de resposta da IA por cenário")
-
-        chart_data_time = {}
-        for r in ai_rows:
-            name = r["cenario"]
-            t = float(r["tempo_ia_s"])
-            if name not in chart_data_time:
-                chart_data_time[name] = []
-            chart_data_time[name].append(t)
-
-        bar_data = {name: sum(vals) / len(vals) for name, vals in chart_data_time.items()}
-        st.bar_chart(bar_data, horizontal=True)
-
-        # --- Chart: Tokens por cenário ---
-        st.markdown("### 📝 Tokens estimados por cenário")
-        chart_data_tokens = {}
-        for r in ai_rows:
-            name = r["cenario"]
-            tok = int(r["tokens_estimados"])
-            if name not in chart_data_tokens:
-                chart_data_tokens[name] = []
-            chart_data_tokens[name].append(tok)
-
-        bar_tokens = {name: sum(vals) / len(vals) for name, vals in chart_data_tokens.items()}
-        st.bar_chart(bar_tokens, horizontal=True)
-
-    # --- Chart: Timeline ---
-    if len(all_rows) > 1:
-        st.markdown("### 📅 Evolução temporal")
-        timeline = []
-        for r in all_rows:
-            timeline.append({
-                "timestamp": r["timestamp"],
-                "Terraform (s)": float(r["tempo_terraform_s"]),
-                "IA (s)": float(r["tempo_ia_s"]),
-            })
-        st.line_chart(
-            data={
-                "Terraform (s)": [t["Terraform (s)"] for t in timeline],
-                "IA (s)": [t["IA (s)"] for t in timeline],
-            }
-        )
-
-    # --- Comparison table ---
+    # --- Comparativo detalhado ---
     if ai_rows:
         st.markdown("### 🔍 Comparativo detalhado (execuções com IA)")
         compare = []
@@ -777,6 +939,8 @@ def render_results_tab():
                 "Terraform (s)": r["tempo_terraform_s"],
                 "IA (s)": r["tempo_ia_s"],
                 "Tokens": r["tokens_estimados"],
+                "tok/s": f"{int(r['tokens_estimados']) / float(r['tempo_ia_s']):.1f}"
+                         if float(r["tempo_ia_s"]) > 0 else "N/A",
             })
         st.dataframe(compare, use_container_width=True, hide_index=True)
 
