@@ -1,0 +1,7 @@
+{
+  "title": "Erro de sintaxe em HCL",
+  "description": "Arquivo Terraform com bloco mal fechado para validar a captura de falhas de sintaxe.",
+  "steps": ["init", "validate"],
+  "tcc_relation": "Representa um dos padroes basicos de falha citados no projeto: erros de estrutura em scripts declarativos. Este cenario ajuda a demonstrar se o metodo identifica rapidamente a causa raiz logo no inicio da pipeline.",
+  "presentation_note": "Use este cenario como demonstracao principal da banca, porque ele e rapido, leve para a maquina e mostra com clareza o ciclo log -> analise -> correcao."
+}

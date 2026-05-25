@@ -1,0 +1,7 @@
+{
+  "title": "Dependencia ciclica entre recursos",
+  "description": "Dois recursos terraform_data referenciam um ao outro para provocar erro de grafo ciclico.",
+  "steps": ["init", "validate", "plan"],
+  "tcc_relation": "Representa falhas semanticas e de modelagem em infraestrutura como codigo. Este cenario demonstra se a IA consegue interpretar um erro de grafo e explicar a dependencia circular sem apenas repetir o log.",
+  "presentation_note": "Use este cenario como segundo exemplo para mostrar que o metodo nao se limita a erro de sintaxe e tambem cobre falhas de modelagem da infraestrutura."
+}
