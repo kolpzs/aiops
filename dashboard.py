@@ -45,24 +45,11 @@ SCENARIOS_DIR = ROOT / "cenarios"
 REPORTS_DIR = ROOT / "relatorios"
 CSV_FILE = REPORTS_DIR / "resultados.csv"
 
-# Known Ollama models (merged with installed ones in dropdowns)
+# 3 modelos focados em código/infra, de empresas distintas, ~7B params
 KNOWN_MODELS = [
-    "qwen2.5-coder:1.5b",
-    "qwen2.5-coder:7b",
-    "qwen2.5-coder:14b",
-    "llama3:8b",
-    "llama3:latest",
-    "llama3.2:3b",
-    "llama3.2:1b",
-    "codellama:7b",
-    "codellama:13b",
-    "gemma2:2b",
-    "gemma2:9b",
-    "phi3:mini",
-    "phi3:medium",
-    "mistral:7b",
-    "deepseek-coder:6.7b",
-    "deepseek-coder-v2:16b",
+    "qwen2.5-coder:7b",      # Alibaba (Qwen) — análise e geração de código
+    "deepseek-coder:6.7b",   # DeepSeek — code review, bug fixing
+    "codellama:7b",           # Meta — variante do Llama otimizada para código
 ]
 
 # ---------------------------------------------------------------------------
