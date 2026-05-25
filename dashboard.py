@@ -1211,6 +1211,148 @@ def render_results_tab():
 
 
 # ---------------------------------------------------------------------------
+# UI: Tab - Automation (overnight batch run)
+# ---------------------------------------------------------------------------
+def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, pg_dsn: str = ""):
+    st.subheader("🤖 Automação Noturna")
+    st.markdown(
+        "Roda **todos os cenários** com **todos os modelos instalados** N vezes cada, "
+        "coletando dados em massa para análise estatística do TCC."
+    )
+
+    _bin = find_ollama_binary()
+    installed_models = list_ollama_models(_bin) if _bin else []
+
+    if not installed_models:
+        st.error("❌ Nenhum modelo Ollama instalado ou Ollama offline. Inicie o Ollama e instale ao menos um modelo.")
+        return
+
+    # --- Configuration ---
+    st.markdown("### ⚙️ Configuração da automação")
+    cfg1, cfg2 = st.columns(2)
+    with cfg1:
+        iterations = st.number_input(
+            "Iterações por modelo",
+            min_value=1,
+            max_value=500,
+            value=100,
+            step=10,
+            key="auto_iterations",
+            help="Quantas vezes rodar TODOS os cenários por modelo",
+        )
+        selected_models = st.multiselect(
+            "Modelos a usar",
+            options=installed_models,
+            default=installed_models,
+            key="auto_models",
+        )
+    with cfg2:
+        st.info(
+            f"📊 **Total estimado de execuções:**\n\n"
+            f"`{len(selected_models)} modelos × {len(scenarios)} cenários × {iterations} iterações`\n\n"
+            f"**= {len(selected_models) * len(scenarios) * iterations:,} execuções**"
+        )
+        if installed_models:
+            # rough estimate: ~90s per scenario with AI on CPU
+            total_secs = len(selected_models) * len(scenarios) * iterations * 90
+            h, remainder = divmod(total_secs, 3600)
+            m = remainder // 60
+            st.caption(f"⏱️ Tempo estimado (90s/cenário): ~{h}h {m}min")
+
+    if not selected_models:
+        st.warning("Selecione ao menos um modelo para prosseguir.")
+        return
+
+    st.markdown("---")
+
+    # --- Controls ---
+    auto_col1, auto_col2 = st.columns(2)
+    with auto_col1:
+        start_btn = st.button(
+            "🤖 Iniciar Automação",
+            key="auto_start",
+            type="primary",
+            width="stretch",
+            disabled=st.session_state.get("auto_running", False),
+        )
+    with auto_col2:
+        stop_btn = st.button(
+            "⏹️ Parar Automação",
+            key="auto_stop",
+            type="secondary",
+            width="stretch",
+            disabled=not st.session_state.get("auto_running", False),
+        )
+
+    if stop_btn:
+        st.session_state.auto_stop_requested = True
+        add_activity("⏹️", "Automação: parada solicitada pelo usuário")
+        st.warning("⏹️ Parada solicitada — aguardando cenário atual terminar...")
+
+    if start_btn:
+        st.session_state.auto_running = True
+        st.session_state.auto_stop_requested = False
+        add_activity("🤖", f"Automação noturna iniciada: {len(selected_models)} modelos × {iterations} iterações × {len(scenarios)} cenários")
+        logger.info(f"🤖 Automação iniciada: {len(selected_models)} modelos, {iterations} iter, {len(scenarios)} cenários")
+
+        total_runs = len(selected_models) * iterations
+        overall_bar = st.progress(0.0, text="Iniciando automação...")
+        runs_done = 0
+
+        completed_normally = True
+        for model_idx, auto_model in enumerate(selected_models):
+            if st.session_state.get("auto_stop_requested"):
+                completed_normally = False
+                break
+
+            model_label = f"Modelo {model_idx + 1}/{len(selected_models)}: **{auto_model}**"
+            st.markdown(f"### 🧠 {model_label}")
+            add_activity("🧠", f"Automação: iniciando modelo {auto_model} ({model_idx+1}/{len(selected_models)})")
+
+            model_bar = st.progress(0.0, text=f"0/{iterations} iterações")
+
+            for iteration_idx in range(iterations):
+                if st.session_state.get("auto_stop_requested"):
+                    completed_normally = False
+                    break
+
+                iter_label = f"Iteração {iteration_idx + 1}/{iterations} — {auto_model}"
+                add_activity("🔁", f"[{auto_model}] Iteração {iteration_idx + 1}/{iterations}")
+
+                with st.expander(f"📦 {iter_label}", expanded=False):
+                    for scenario in scenarios:
+                        if st.session_state.get("auto_stop_requested"):
+                            break
+                        execute_scenario(
+                            scenario,
+                            auto_model,
+                            ollama_url,
+                            timeout,
+                            skip_llm=False,  # always with AI
+                            log_container=st,
+                            pg_dsn=pg_dsn,
+                        )
+
+                runs_done += 1
+                pct_model = (iteration_idx + 1) / iterations
+                pct_overall = runs_done / total_runs
+                model_bar.progress(pct_model, text=f"{iteration_idx + 1}/{iterations} iterações")
+                overall_bar.progress(pct_overall, text=f"Total: {runs_done}/{total_runs} rodadas ({pct_overall*100:.1f}%)")
+
+            add_activity("✅", f"Automação: modelo {auto_model} concluído ({iteration_idx + 1} iterações)")
+
+        st.session_state.auto_running = False
+        if completed_normally:
+            total_exec = runs_done * len(scenarios)
+            st.success(f"🎉 Automação concluída! {total_exec:,} execuções realizadas com {len(selected_models)} modelo(s).")
+            add_activity("🎉", f"Automação concluída: {total_exec:,} execuções totais")
+            logger.info(f"🎉 Automação finalizada: {total_exec} execuções")
+        else:
+            st.warning(f"⏹️ Automação interrompida após {runs_done * len(scenarios):,} execuções.")
+            add_activity("⏹️", f"Automação interrompida: {runs_done * len(scenarios):,} execuções realizadas")
+
+
+# ---------------------------------------------------------------------------
 # UI: Tab - Reports
 # ---------------------------------------------------------------------------
 def render_reports_tab():
@@ -1275,6 +1417,7 @@ def main():
     # Build tab list
     tab_names = [f"📁 {s['slug']}" for s in scenarios]
     tab_names.append("🚀 Executar Todos")
+    tab_names.append("🤖 Automação")
     tab_names.append("📊 Resultados")
     tab_names.append("📂 Relatórios")
     tab_names.append("📋 Log de Atividades")
@@ -1290,16 +1433,20 @@ def main():
     with tabs[len(scenarios)]:
         render_run_all_tab(scenarios, model, ollama_url, timeout, pg_dsn=pg_dsn)
 
-    # Results tab
+    # Automation tab
     with tabs[len(scenarios) + 1]:
+        render_automation_tab(scenarios, ollama_url, timeout, pg_dsn=pg_dsn)
+
+    # Results tab
+    with tabs[len(scenarios) + 2]:
         render_results_tab()
 
     # Reports tab
-    with tabs[len(scenarios) + 2]:
+    with tabs[len(scenarios) + 3]:
         render_reports_tab()
 
     # Activity Log tab
-    with tabs[len(scenarios) + 3]:
+    with tabs[len(scenarios) + 4]:
         render_activity_log_tab()
 
     # Footer
