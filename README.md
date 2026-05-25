@@ -1,4 +1,4 @@
-# TCC MVP — Análise de Logs em IaC com IA Generativa
+# AIOPs — Análise de Logs em IaC com IA Generativa
 
 > **Análise estruturada de logs em Infraestrutura como Código: um método baseado em Inteligência Artificial Generativa para otimização DevOps.**
 
