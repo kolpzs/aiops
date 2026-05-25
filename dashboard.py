@@ -445,23 +445,92 @@ def execute_scenario(
         if not ok_now:
             log_container.warning("⚠️ Ollama offline — relatório salvo sem IA.")
         else:
-            log_container.markdown("**🤖 Análise com IA...**")
-            ai_placeholder = log_container.empty()
+            log_container.markdown("**🤖 Análise com IA em andamento...**")
             prompt = build_prompt(scenario, scenario["tf_code"], exec_log)
             full_response = ""
 
+            # Section tracking for live progress
+            _SECTIONS = [
+                ("CAUSA RAIZ", "🔍 Identificando causa raiz..."),
+                ("CORREÇÃO", "🔧 Gerando correção..."),
+                ("TRECHO DE CÓDIGO SUGERIDO", "💻 Escrevendo código corrigido..."),
+                ("AVALIAÇÃO DE SEGURANÇA", "🔒 Avaliando segurança..."),
+                ("RELAÇÃO COM OS CRITÉRIOS", "📊 Relacionando com critérios do TCC..."),
+            ]
+            sections_found: list[str] = []
+
+            # Live status area
+            status_box = log_container.empty()
+            progress_bar = log_container.progress(0, text="Aguardando modelo carregar na memória...")
+            section_status = log_container.empty()
+            ai_placeholder = log_container.empty()
+            stats_placeholder = log_container.empty()
+
+            def _update_live_display(elapsed: float, tok_count: int, current_section: str):
+                """Update the live metrics display."""
+                tok_per_sec = tok_count / elapsed if elapsed > 0 else 0
+                pct = min(elapsed / timeout, 0.99)
+                progress_bar.progress(pct, text=f"⏱️ {elapsed:.0f}s / {timeout}s  |  📝 {tok_count} tokens  |  ⚡ {tok_per_sec:.1f} tok/s")
+
+                # Build section checklist
+                checklist_lines = []
+                for sec_key, sec_label in _SECTIONS:
+                    if sec_key in sections_found:
+                        checklist_lines.append(f"✅ ~~{sec_label}~~")
+                    elif sec_key == current_section:
+                        checklist_lines.append(f"⏳ **{sec_label}**")
+                    else:
+                        checklist_lines.append(f"⬜ {sec_label}")
+                section_status.markdown("\n".join(checklist_lines))
+
             try:
                 t0_ai = time.time()
+                current_sec = ""
+                token_count = 0
+                last_ui_update = 0.0
+
                 for token in call_ollama_stream(prompt, model, ollama_url, timeout):
                     full_response += token
-                    ai_placeholder.markdown(full_response + "▌")
+                    token_count += 1
+
+                    # Detect which section we're in
+                    for sec_key, _ in _SECTIONS:
+                        if sec_key in full_response and sec_key not in sections_found:
+                            if current_sec and current_sec != sec_key:
+                                sections_found.append(current_sec)
+                            current_sec = sec_key
+
+                    # Throttle UI updates to every ~0.3s to avoid flickering
+                    now = time.time()
+                    if now - last_ui_update > 0.3:
+                        elapsed = now - t0_ai
+                        _update_live_display(elapsed, token_count, current_sec)
+                        ai_placeholder.markdown(full_response + "▌")
+                        last_ui_update = now
+
+                # Mark last section done
+                if current_sec and current_sec not in sections_found:
+                    sections_found.append(current_sec)
+
                 ai_elapsed = time.time() - t0_ai
                 ai_placeholder.markdown(full_response)
                 ai_response = full_response
-                tokens_est = len(full_response.split())
-                log_container.success(f"✅ IA concluída em {ai_elapsed:.0f}s (~{tokens_est} tokens)")
+                tokens_est = token_count
+                tok_s = tokens_est / ai_elapsed if ai_elapsed > 0 else 0
+
+                # Final state
+                progress_bar.progress(1.0, text=f"✅ Concluído em {ai_elapsed:.0f}s  |  {tokens_est} tokens  |  {tok_s:.1f} tok/s")
+                sections_found = [s for s, _ in _SECTIONS]  # all done
+                _update_live_display(ai_elapsed, tokens_est, "")
+                status_box.success(f"✅ IA concluída em {ai_elapsed:.0f}s — {tokens_est} tokens ({tok_s:.1f} tok/s)")
+
             except (TimeoutError, socket.timeout):
-                log_container.error(f"⏱️ Timeout ({timeout}s)")
+                elapsed = time.time() - t0_ai
+                progress_bar.progress(1.0, text=f"⏱️ Timeout após {elapsed:.0f}s")
+                log_container.error(f"⏱️ Timeout ({timeout}s). Resposta parcial ({token_count} tokens) salva.")
+                if full_response:
+                    ai_response = full_response + "\n\n*(resposta interrompida por timeout)*"
+                    tokens_est = token_count
             except Exception as exc:
                 log_container.error(f"❌ Erro: {exc}")
     else:
