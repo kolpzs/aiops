@@ -311,7 +311,7 @@ def call_ollama_stream(prompt: str, model: str, url: str, timeout: int):
 
 
 def save_report(scenario: dict, status: str, tf_code: str, exec_log: str, ai_response: str | None) -> Path:
-    REPORTS_DIR.mkdir(exist_ok=True)
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     path = REPORTS_DIR / f"{scenario['slug']}.md"
     ai_section = ai_response or "IA não executada nesta rodada."
     content = "\n".join([
@@ -346,7 +346,7 @@ def save_report(scenario: dict, status: str, tf_code: str, exec_log: str, ai_res
 # ---------------------------------------------------------------------------
 def append_csv_result(row: dict) -> None:
     """Append a result row to the CSV file, creating it if needed."""
-    REPORTS_DIR.mkdir(exist_ok=True)
+    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     file_exists = CSV_FILE.exists()
     with open(CSV_FILE, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=CSV_HEADERS)
@@ -361,6 +361,46 @@ def load_csv_results() -> list[dict]:
         return []
     with open(CSV_FILE, "r", encoding="utf-8") as f:
         return list(csv.DictReader(f))
+
+
+# ---------------------------------------------------------------------------
+# Activity Log (session-based)
+# ---------------------------------------------------------------------------
+def _init_activity_log():
+    """Initialize the activity log in session state."""
+    if "activity_log" not in st.session_state:
+        st.session_state.activity_log = []
+
+
+def add_activity(icon: str, message: str):
+    """Add an entry to the activity log."""
+    _init_activity_log()
+    ts = datetime.now().strftime("%H:%M:%S")
+    st.session_state.activity_log.insert(0, {"time": ts, "icon": icon, "message": message})
+    # Keep only last 100 entries
+    st.session_state.activity_log = st.session_state.activity_log[:100]
+
+
+def render_activity_log_tab():
+    """Render the activity log tab."""
+    _init_activity_log()
+    st.subheader("📋 Log de Atividades")
+    st.caption("Registro em tempo real de todas as ações realizadas nesta sessão.")
+
+    if not st.session_state.activity_log:
+        st.info("Nenhuma atividade registrada ainda. Execute cenários ou interaja com o dashboard.")
+        return
+
+    if st.button("🗑️ Limpar log", key="clear_log"):
+        st.session_state.activity_log = []
+        st.rerun()
+
+    # Render as a scrollable container
+    log_text = "\n".join(
+        f"`{entry['time']}` {entry['icon']} {entry['message']}"
+        for entry in st.session_state.activity_log
+    )
+    st.markdown(log_text)
 
 
 # ---------------------------------------------------------------------------
@@ -560,6 +600,7 @@ def execute_scenario(
         "relatorio_path": str(report_path.relative_to(ROOT)),
     }
     append_csv_result(csv_row)
+    add_activity("🧪", f"Cenário '{scenario['slug']}' executado — {status_str}")
     return csv_row
 
 
@@ -614,18 +655,20 @@ def render_sidebar():
         else:
             c1, c2 = st.columns(2)
             with c1:
-                if st.button("▶️ Iniciar", key="sb_start", use_container_width=True, disabled=is_online):
+                if st.button("▶️ Iniciar", key="sb_start", width="stretch", disabled=is_online):
                     with st.spinner("Iniciando..."):
                         ok, msg = start_ollama(ollama_bin)
                     st.success(msg) if ok else st.error(msg)
+                    add_activity("▶️", f"Ollama {'iniciado' if ok else 'falha ao iniciar'}")
                     if ok:
                         time.sleep(1)
                         st.rerun()
             with c2:
-                if st.button("⏹️ Parar", key="sb_stop", use_container_width=True, disabled=not is_online):
+                if st.button("⏹️ Parar", key="sb_stop", width="stretch", disabled=not is_online):
                     with st.spinner("Parando..."):
                         ok, msg = stop_ollama()
                     st.success(msg) if ok else st.error(msg)
+                    add_activity("⏹️", f"Ollama {'parado' if ok else 'falha ao parar'}")
                     if ok:
                         time.sleep(1)
                         st.rerun()
@@ -634,11 +677,12 @@ def render_sidebar():
                 models = list_ollama_models(ollama_bin)
                 if models:
                     st.caption(f"Modelos: {', '.join(models)}")
-                    if st.button("🧹 Descarregar da RAM", key="sb_unload", use_container_width=True):
+                    if st.button("🧹 Descarregar da RAM", key="sb_unload", width="stretch"):
                         ok, msg = unload_model(model, ollama_bin)
                         st.info(msg) if ok else st.error(msg)
+                        add_activity("🧹", f"Modelo {'descarregado' if ok else 'falha ao descarregar'}")
 
-            st.button("🔄 Atualizar", key="sb_refresh", use_container_width=True, on_click=lambda: None)
+            st.button("🔄 Atualizar", key="sb_refresh", width="stretch", on_click=lambda: None)
 
         st.divider()
         st.header("🔬 Sobre o TCC")
@@ -676,7 +720,7 @@ def render_scenario_tab(scenario: dict, model: str, ollama_url: str, timeout: in
         f"▶️ Executar {scenario['slug']}",
         key=f"run_{scenario['slug']}",
         type="primary",
-        use_container_width=True,
+        width="stretch",
     )
 
     if run_btn:
@@ -698,10 +742,11 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
         "▶️ Executar TODOS os cenários",
         key="run_all",
         type="primary",
-        use_container_width=True,
+        width="stretch",
     )
 
     if run_all_btn:
+        add_activity("🚀", f"Execução em lote iniciada ({len(scenarios)} cenários)")
         total = len(scenarios)
         progress_bar = st.progress(0, text=f"Preparando... 0/{total}")
         results = []
@@ -732,7 +777,7 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
                 "Tokens": r["tokens_estimados"],
                 "Status": "✅" if r["status"].startswith("failure-captured") else "⚠️",
             })
-        st.dataframe(summary_data, use_container_width=True, hide_index=True)
+        st.dataframe(summary_data, width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -799,7 +844,7 @@ def render_results_tab():
             showlegend=True,
             legend=dict(orientation="h", x=0.3, y=-0.1),
         )
-        st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, width="stretch")
     else:
         st.bar_chart({"Com IA": with_ia, "Sem IA": without_ia})
 
@@ -833,7 +878,7 @@ def render_results_tab():
             height=320,
             margin=dict(t=20, b=40),
         )
-        st.plotly_chart(fig_etapas, use_container_width=True)
+        st.plotly_chart(fig_etapas, width="stretch")
     else:
         st.bar_chart(etapas)
 
@@ -871,7 +916,7 @@ def render_results_tab():
                 margin=dict(t=20, b=60),
                 legend=dict(orientation="h", y=-0.2),
             )
-            st.plotly_chart(fig_grp, use_container_width=True)
+            st.plotly_chart(fig_grp, width="stretch")
         else:
             st.bar_chart({"Terraform (s)": tf_times, "IA (s)": ia_times})
     else:
@@ -903,7 +948,7 @@ def render_results_tab():
                 height=300,
                 margin=dict(t=20, b=40),
             )
-            st.plotly_chart(fig_tok, use_container_width=True)
+            st.plotly_chart(fig_tok, width="stretch")
         else:
             st.bar_chart(avg_by_model)
     else:
@@ -941,7 +986,7 @@ def render_results_tab():
                     height=300,
                     margin=dict(t=20, b=40, r=100),
                 )
-                st.plotly_chart(fig_eff, use_container_width=True)
+                st.plotly_chart(fig_eff, width="stretch")
             else:
                 st.bar_chart(avg_efic)
         else:
@@ -976,7 +1021,7 @@ def render_results_tab():
                 legend=dict(orientation="h", y=-0.3),
                 xaxis=dict(tickangle=-30),
             )
-            st.plotly_chart(fig_line, use_container_width=True)
+            st.plotly_chart(fig_line, width="stretch")
         else:
             st.line_chart({"Terraform (s)": tf_vals, "IA (s)": ia_vals})
 
@@ -984,16 +1029,17 @@ def render_results_tab():
 
     # --- Tabela histórico + download CSV ---
     st.markdown("### 📋 Histórico completo de execuções")
-    st.dataframe(data, use_container_width=True, hide_index=True)
+    st.dataframe(data, width="stretch", hide_index=True)
 
     csv_content = CSV_FILE.read_text(encoding="utf-8")
-    st.download_button(
+    if st.download_button(
         "⬇️ Baixar CSV completo",
         data=csv_content,
         file_name="resultados_tcc_mvp.csv",
         mime="text/csv",
-        use_container_width=True,
-    )
+        width="stretch",
+    ):
+        add_activity("⬇️", "CSV de resultados baixado")
 
     # --- Comparativo detalhado ---
     if ai_rows:
@@ -1011,7 +1057,7 @@ def render_results_tab():
                 "tok/s": f"{int(r['tokens_estimados']) / float(r['tempo_ia_s']):.1f}"
                          if float(r["tempo_ia_s"]) > 0 else "N/A",
             })
-        st.dataframe(compare, use_container_width=True, hide_index=True)
+        st.dataframe(compare, width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
@@ -1038,13 +1084,14 @@ def render_reports_tab():
     all_reports = "\n\n---\n\n".join(
         rp.read_text(encoding="utf-8") for rp in reports
     )
-    st.download_button(
+    if st.download_button(
         "⬇️ Baixar todos os relatórios (.md)",
         data=all_reports,
         file_name="relatorios_tcc_mvp.md",
         mime="text/markdown",
-        use_container_width=True,
-    )
+        width="stretch",
+    ):
+        add_activity("⬇️", "Relatórios MD baixados")
 
 
 # ---------------------------------------------------------------------------
@@ -1058,6 +1105,8 @@ def main():
         initial_sidebar_state="expanded",
     )
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+    _init_activity_log()
+    add_activity("🔬", "Dashboard carregado") if not st.session_state.activity_log else None
 
     ollama_url, model, timeout, is_online = render_sidebar()
 
@@ -1078,6 +1127,7 @@ def main():
     tab_names.append("🚀 Executar Todos")
     tab_names.append("📊 Resultados")
     tab_names.append("📂 Relatórios")
+    tab_names.append("📋 Log de Atividades")
 
     tabs = st.tabs(tab_names)
 
@@ -1097,6 +1147,10 @@ def main():
     # Reports tab
     with tabs[len(scenarios) + 2]:
         render_reports_tab()
+
+    # Activity Log tab
+    with tabs[len(scenarios) + 3]:
+        render_activity_log_tab()
 
     # Footer
     st.divider()
