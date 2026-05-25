@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="qwen2.5-coder:7b",
+        default="qwen2.5-coder:1.5b",
         help="Modelo do Ollama a ser usado quando a etapa de IA estiver habilitada.",
     )
     parser.add_argument(

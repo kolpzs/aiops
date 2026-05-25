@@ -525,8 +525,8 @@ def render_sidebar():
     with st.sidebar:
         st.header("⚙️ Configuração")
         ollama_url = st.text_input("URL do Ollama", value="http://127.0.0.1:11434/api/generate")
-        model = st.text_input("Modelo", value="qwen2.5-coder:7b")
-        timeout = st.slider("Timeout (s)", 30, 600, 180, 30, help="Tempo máximo para resposta da IA")
+        model = st.text_input("Modelo", value="qwen2.5-coder:1.5b")
+        timeout = st.slider("Timeout (s)", 30, 600, 300, 30, help="Tempo máximo para resposta da IA")
 
         st.divider()
         st.header("📡 Controle do Ollama")
