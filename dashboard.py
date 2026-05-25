@@ -366,6 +366,61 @@ def append_csv_result(row: dict) -> None:
         writer.writerow(row)
 
 
+# ---------------------------------------------------------------------------
+# PostgreSQL helpers (optional persistence)
+# ---------------------------------------------------------------------------
+CREATE_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS tcc_resultados (
+    id SERIAL PRIMARY KEY,
+    timestamp TEXT,
+    cenario TEXT,
+    titulo TEXT,
+    modelo TEXT,
+    timeout_config INTEGER,
+    etapa_falha TEXT,
+    status TEXT,
+    tempo_terraform_s REAL,
+    tempo_ia_s REAL,
+    tokens_estimados INTEGER,
+    ia_executada TEXT,
+    relatorio_path TEXT
+);
+"""
+
+
+def check_postgres(dsn: str):
+    """Test PG connection, create table if needed. Returns (ok, message)."""
+    try:
+        import psycopg2
+        conn = psycopg2.connect(dsn, connect_timeout=5)
+        cur = conn.cursor()
+        cur.execute(CREATE_TABLE_SQL)
+        conn.commit()
+        conn.close()
+        return True, "ok"
+    except Exception as e:
+        return False, str(e)
+
+
+def append_postgres_result(dsn: str, row: dict) -> None:
+    """Insert a result row into PostgreSQL if connection is available."""
+    if not dsn:
+        return
+    try:
+        import psycopg2
+        conn = psycopg2.connect(dsn, connect_timeout=5)
+        cur = conn.cursor()
+        cur.execute(CREATE_TABLE_SQL)
+        cols = ", ".join(row.keys())
+        placeholders = ", ".join(["%s"] * len(row))
+        cur.execute(f"INSERT INTO tcc_resultados ({cols}) VALUES ({placeholders})", list(row.values()))
+        conn.commit()
+        conn.close()
+        logger.info("🐘 Resultado inserido no PostgreSQL")
+    except Exception as e:
+        logger.warning(f"⚠️ Falha ao salvar no PostgreSQL: {e}")
+
+
 def load_csv_results() -> list[dict]:
     """Load all CSV results."""
     if not CSV_FILE.exists():
@@ -425,6 +480,7 @@ def execute_scenario(
     skip_llm: bool,
     log_container,
     progress_text=None,
+    pg_dsn: str = "",
 ) -> dict:
     """
     Run a single scenario end-to-end. Writes live output to log_container.
@@ -623,6 +679,9 @@ def execute_scenario(
         "relatorio_path": str(report_path.relative_to(ROOT)),
     }
     append_csv_result(csv_row)
+    if pg_dsn:
+        append_postgres_result(pg_dsn, csv_row)
+        add_activity("🐘", f"[{scenario['slug']}] Resultado salvo no PostgreSQL")
     add_activity("🧪", f"Cenário '{scenario['slug']}' executado — {status_str}")
     return csv_row
 
@@ -658,7 +717,19 @@ def render_sidebar():
     with st.sidebar:
         st.header("⚙️ Configuração")
         ollama_url = st.text_input("URL do Ollama", value="http://127.0.0.1:11434/api/generate")
-        model = st.text_input("Modelo", value="qwen2.5-coder:1.5b")
+
+        # Model dropdown — lists installed Ollama models, falls back to text input
+        _bin = find_ollama_binary()
+        installed_models = list_ollama_models(_bin) if _bin else []
+        KNOWN_MODELS = ["qwen2.5-coder:1.5b", "qwen2.5-coder:7b", "llama3:8b", "codellama:7b", "gemma2:2b"]
+        model_options = sorted(set(installed_models + KNOWN_MODELS)) + ["✏️ Digitar manualmente..."]
+        default_idx = model_options.index("qwen2.5-coder:1.5b") if "qwen2.5-coder:1.5b" in model_options else 0
+        selected = st.selectbox("Modelo", options=model_options, index=default_idx, key="model_select")
+        if selected == "✏️ Digitar manualmente...":
+            model = st.text_input("Nome do modelo (ex: phi3:mini)", key="model_custom", placeholder="modelo:tag")
+        else:
+            model = selected
+
         timeout = st.slider("Timeout (s)", 30, 600, 300, 30, help="Tempo máximo para resposta da IA")
 
         st.divider()
@@ -717,7 +788,26 @@ def render_sidebar():
             for name, desc in EVALUATION_CRITERIA:
                 st.markdown(f"**{name}:** {desc}")
 
-    return ollama_url, model, timeout, is_online
+        st.divider()
+        st.header("🐘 PostgreSQL (opcional)")
+        pg_dsn = st.text_input(
+            "Connection string",
+            value="",
+            key="pg_dsn",
+            placeholder="postgresql://user:senha@localhost:5433/tcc_resultados",
+            help="Se preenchida, os resultados também são salvos no banco.",
+        )
+        if pg_dsn:
+            pg_ok, pg_msg = check_postgres(pg_dsn)
+            if pg_ok:
+                st.success(f"✅ PG conectado")
+                add_activity("🐘", "PostgreSQL conectado com sucesso")
+            else:
+                st.error(f"❌ {pg_msg}")
+        else:
+            pg_ok = False
+
+    return ollama_url, model, timeout, is_online, pg_dsn
 
 
 # ---------------------------------------------------------------------------
@@ -755,11 +845,21 @@ def render_scenario_tab(scenario: dict, model: str, ollama_url: str, timeout: in
 # ---------------------------------------------------------------------------
 # UI: Tab - Run All
 # ---------------------------------------------------------------------------
-def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeout: int):
+def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeout: int, pg_dsn: str = ""):
     st.subheader("🚀 Executar todos os cenários")
     st.markdown("Executa todos os cenários em sequência, mostrando progresso em tempo real.")
 
     skip_llm = st.checkbox("Pular IA (só Terraform)", key="skip_all")
+
+    # --- Loop mode controls ---
+    loop_col1, loop_col2 = st.columns([1, 2])
+    with loop_col1:
+        loop_mode = st.checkbox("🔁 Modo Loop", key="loop_mode", help="Repete a execução automaticamente N vezes")
+    with loop_col2:
+        if loop_mode:
+            loop_count = st.number_input("Iterações", min_value=1, max_value=50, value=3, step=1, key="loop_count")
+        else:
+            loop_count = 1
 
     run_all_btn = st.button(
         "▶️ Executar TODOS os cenários",
@@ -769,38 +869,65 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
     )
 
     if run_all_btn:
-        add_activity("🚀", f"Execução em lote iniciada ({len(scenarios)} cenários)")
-        total = len(scenarios)
-        progress_bar = st.progress(0, text=f"Preparando... 0/{total}")
-        results = []
+        if "stop_loop" not in st.session_state:
+            st.session_state.stop_loop = False
+        st.session_state.stop_loop = False
 
-        for idx, scenario in enumerate(scenarios):
-            progress_bar.progress(
-                (idx) / total,
-                text=f"Executando {scenario['slug']}... ({idx + 1}/{total})"
-            )
+        stop_btn_placeholder = st.empty()
 
-            with st.expander(f"📁 {scenario['slug']} — {scenario['title']}", expanded=True):
-                result = execute_scenario(
-                    scenario, model, ollama_url, timeout, skip_llm, st,
+        for iteration in range(loop_count):
+            if st.session_state.get("stop_loop"):
+                st.warning("⏹️ Loop interrompido pelo usuário.")
+                add_activity("⏹️", "Loop interrompido pelo usuário")
+                break
+
+            if loop_mode:
+                st.markdown(f"---\n### 🔁 Iteração {iteration + 1} / {loop_count}")
+                add_activity("🔁", f"Loop — Iteração {iteration + 1}/{loop_count} iniciada")
+
+            with stop_btn_placeholder:
+                if loop_mode and iteration < loop_count - 1:
+                    if st.button("⏹️ Parar Loop", key=f"stop_{iteration}", type="secondary"):
+                        st.session_state.stop_loop = True
+
+            add_activity("🚀", f"Execução em lote iniciada ({len(scenarios)} cenários)")
+            total = len(scenarios)
+            progress_bar = st.progress(0, text=f"Preparando... 0/{total}")
+            results = []
+
+            for idx, scenario in enumerate(scenarios):
+                if st.session_state.get("stop_loop"):
+                    break
+                progress_bar.progress(
+                    (idx) / total,
+                    text=f"Executando {scenario['slug']}... ({idx + 1}/{total})"
                 )
-                results.append(result)
 
-        progress_bar.progress(1.0, text=f"✅ Concluído! {total}/{total} cenários")
+                with st.expander(f"📁 {scenario['slug']} — {scenario['title']}", expanded=True):
+                    result = execute_scenario(
+                        scenario, model, ollama_url, timeout, skip_llm, st, pg_dsn=pg_dsn,
+                    )
+                    results.append(result)
 
-        # Summary table
-        st.markdown("### 📊 Resumo da execução")
-        summary_data = []
-        for r in results:
-            summary_data.append({
-                "Cenário": r["cenario"],
-                "Etapa Falha": r["etapa_falha"],
-                "Terraform (s)": r["tempo_terraform_s"],
-                "IA (s)": r["tempo_ia_s"],
-                "Tokens": r["tokens_estimados"],
-                "Status": "✅" if r["status"].startswith("failure-captured") else "⚠️",
-            })
-        st.dataframe(summary_data, width="stretch", hide_index=True)
+            progress_bar.progress(1.0, text=f"✅ Concluído! {total}/{total} cenários")
+            if loop_mode:
+                add_activity("✅", f"Loop — Iteração {iteration + 1}/{loop_count} concluída")
+
+            # Summary table
+            st.markdown("### 📊 Resumo da execução")
+            summary_data = []
+            for r in results:
+                summary_data.append({
+                    "Cenário": r["cenario"],
+                    "Etapa Falha": r["etapa_falha"],
+                    "Terraform (s)": r["tempo_terraform_s"],
+                    "IA (s)": r["tempo_ia_s"],
+                    "Tokens": r["tokens_estimados"],
+                    "Status": "✅" if r["status"].startswith("failure-captured") else "⚠️",
+                })
+            st.dataframe(summary_data, width="stretch", hide_index=True)
+
+        stop_btn_placeholder.empty()
 
 
 # ---------------------------------------------------------------------------
@@ -1131,7 +1258,7 @@ def main():
     _init_activity_log()
     add_activity("🔬", "Dashboard carregado") if not st.session_state.activity_log else None
 
-    ollama_url, model, timeout, is_online = render_sidebar()
+    ollama_url, model, timeout, is_online, pg_dsn = render_sidebar()
 
     st.title("🔬 Análise Estruturada de Logs em IaC com IA Generativa")
     st.caption("MVP do TCC — Laboratório de Falhas Controladas com Terraform + Ollama")
@@ -1161,7 +1288,7 @@ def main():
 
     # Run All tab
     with tabs[len(scenarios)]:
-        render_run_all_tab(scenarios, model, ollama_url, timeout)
+        render_run_all_tab(scenarios, model, ollama_url, timeout, pg_dsn=pg_dsn)
 
     # Results tab
     with tabs[len(scenarios) + 1]:

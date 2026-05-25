@@ -1,0 +1,8 @@
+{
+  "slug": "07-postgres",
+  "title": "PostgreSQL sem senha obrigatória",
+  "description": "Provisiona um container PostgreSQL via Terraform sem definir a variável de ambiente obrigatória `POSTGRES_PASSWORD`. O container inicializa mas encerra imediatamente com erro de configuração crítico — simulando falha de banco de dados em infra IaC.",
+  "steps": ["init", "apply"],
+  "tcc_relation": "H2 — A IA identifica causas raiz em falhas de banco de dados provisionado via IaC (container crash, configuração de ambiente ausente).",
+  "presentation_note": "Cenário real: DBA provisiona banco sem senha → container cai em produção. IA deve identificar a variável ausente e sugerir a correção."
+}
