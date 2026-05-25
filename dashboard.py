@@ -45,6 +45,26 @@ SCENARIOS_DIR = ROOT / "cenarios"
 REPORTS_DIR = ROOT / "relatorios"
 CSV_FILE = REPORTS_DIR / "resultados.csv"
 
+# Known Ollama models (merged with installed ones in dropdowns)
+KNOWN_MODELS = [
+    "qwen2.5-coder:1.5b",
+    "qwen2.5-coder:7b",
+    "qwen2.5-coder:14b",
+    "llama3:8b",
+    "llama3:latest",
+    "llama3.2:3b",
+    "llama3.2:1b",
+    "codellama:7b",
+    "codellama:13b",
+    "gemma2:2b",
+    "gemma2:9b",
+    "phi3:mini",
+    "phi3:medium",
+    "mistral:7b",
+    "deepseek-coder:6.7b",
+    "deepseek-coder-v2:16b",
+]
+
 # ---------------------------------------------------------------------------
 # TCC constants
 # ---------------------------------------------------------------------------
@@ -721,7 +741,6 @@ def render_sidebar():
         # Model dropdown — lists installed Ollama models, falls back to text input
         _bin = find_ollama_binary()
         installed_models = list_ollama_models(_bin) if _bin else []
-        KNOWN_MODELS = ["qwen2.5-coder:1.5b", "qwen2.5-coder:7b", "llama3:8b", "codellama:7b", "gemma2:2b"]
         model_options = sorted(set(installed_models + KNOWN_MODELS)) + ["✏️ Digitar manualmente..."]
         default_idx = model_options.index("qwen2.5-coder:1.5b") if "qwen2.5-coder:1.5b" in model_options else 0
         selected = st.selectbox("Modelo", options=model_options, index=default_idx, key="model_select")
@@ -1222,10 +1241,12 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
 
     _bin = find_ollama_binary()
     installed_models = list_ollama_models(_bin) if _bin else []
+    # Combine installed + known models; installed ones appear first, marked with ✅
+    all_known = sorted(set(installed_models + KNOWN_MODELS))
+    model_display = {m: (f"✅ {m}" if m in installed_models else f"⬜ {m} (não instalado)") for m in all_known}
 
     if not installed_models:
-        st.error("❌ Nenhum modelo Ollama instalado ou Ollama offline. Inicie o Ollama e instale ao menos um modelo.")
-        return
+        st.warning("⚠️ Nenhum modelo instalado detectado. Você pode selecionar modelos da lista, mas precisará instalá-los antes de executar.")
 
     # --- Configuration ---
     st.markdown("### ⚙️ Configuração da automação")
@@ -1242,8 +1263,9 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
         )
         selected_models = st.multiselect(
             "Modelos a usar",
-            options=installed_models,
+            options=all_known,
             default=installed_models,
+            format_func=lambda m: model_display[m],
             key="auto_models",
         )
     with cfg2:
