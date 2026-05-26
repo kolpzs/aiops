@@ -2,14 +2,13 @@
 
 \subsection{Objetivo Geral}
 
-Avaliar a eficácia de modelos de Inteligência Artificial Generativa executados localmente na análise automatizada de logs de falhas em Infraestrutura como Código (Terraform), por meio de uma abordagem de \textit{context prompting} estruturado.
+Propor um método estruturado de interpretação de logs, utilizando Inteligência Artificial Generativa, para identificar a causa raiz e sugerir correções em falhas de provisionamento de infraestrutura como código, visando otimizar o fluxo de trabalho em operações DevOps.
 
 \subsection{Objetivos Específicos}
 
 \begin{itemize}
-    \item Projetar e implementar um \textit{pipeline} automatizado que capture logs de erro do Terraform, combine-os com o código-fonte da infraestrutura e submeta o contexto a modelos de linguagem locais via API do Ollama.
-    \item Catalogar e implementar cenários controlados de falhas em Terraform, abrangendo categorias como erros de sintaxe, dependências cíclicas, conflitos de recursos e configurações inválidas.
-    \item Comparar o desempenho de três modelos de linguagem de fabricantes distintos --- CodeLlama (Meta), DeepSeek-Coder (DeepSeek) e Qwen2.5-Coder (Alibaba) --- na identificação da causa raiz e na sugestão de correções.
-    \item Analisar quantitativamente os resultados por meio de métricas de assertividade, tempo de resposta e volume de \textit{tokens} processados, utilizando técnicas estatísticas descritivas e visualizações gráficas.
-    \item Desenvolver um \textit{dashboard} interativo em Streamlit para visualização dos resultados, com suporte a exportação em PDF para inclusão em relatórios acadêmicos.
+    \item Mapear os principais padrões de falha e logs de erro gerados durante o provisionamento de recursos em ferramentas de infraestrutura como código, utilizando tecnologias consolidadas de mercado (como o Terraform) como base de estudo.
+    \item Analisar as capacidades e limitações dos Modelos de Linguagem de Grande Escala (LLMs) atuais na interpretação de dados técnicos semiestruturados, como logs de execução e outputs de pipelines.
+    \item Desenvolver e documentar um fluxo de trabalho (através de diagramas de arquitetura e modelagem conceitual) que integre a extração do log de erro, o processamento de contexto via IA e a entrega da sugestão de correção.
+    \item Estabelecer critérios e métricas teóricas para avaliar a segurança e a assertividade das sugestões geradas pela IA garantindo que as correções propostas sigam as melhores práticas de infraestrutura.
 \end{itemize}

@@ -1,64 +1,16 @@
 \section{METODOLOGIA}
 
-\subsection{Classificação da Pesquisa}
+\textbf{Classificação da Pesquisa:}
 
-Esta pesquisa classifica-se como \textbf{aplicada} quanto à sua natureza, pois visa resolver um problema prático específico --- a análise automatizada de falhas em IaC. Quanto aos objetivos, é \textbf{exploratória e descritiva}, uma vez que investiga a aplicabilidade de LLMs em um domínio pouco explorado e descreve quantitativamente o desempenho de diferentes modelos. Quanto à abordagem, adota uma perspectiva \textbf{quantitativa}, utilizando métricas numéricas para comparação. Os procedimentos técnicos incluem \textbf{experimentação controlada} em ambiente laboratorial.
+Quanto à sua natureza, trata-se de uma pesquisa aplicada, pois visa gerar conhecimentos dirigidos à solução de problemas práticos no fluxo de trabalho de operações de TI. Quanto aos objetivos, caracteriza-se como uma pesquisa exploratória e descritiva, buscando detalhar o fenômeno da análise de logs por IA e estabelecer métodos padronizados de interação entre o engenheiro e o modelo de linguagem.
 
-\subsection{Ambiente Experimental}
+\textbf{Procedimentos Técnicos e Instrumentos de Coleta:}
 
-O ambiente experimental consiste em:
-\begin{itemize}
-    \item \textbf{Hardware:} Computador pessoal com processador multi-core, 16\,GB de RAM e GPU integrada, executando sistema operacional Linux (Ubuntu).
-    \item \textbf{Motor de IA:} Ollama instalado localmente, servindo modelos via API REST na porta 11434.
-    \item \textbf{Modelos avaliados:} CodeLlama 7B (Meta), DeepSeek-Coder 6.7B (DeepSeek) e Qwen2.5-Coder 7B (Alibaba).
-    \item \textbf{Ferramenta de IaC:} Terraform com provedor Docker para simulação de cenários locais.
-    \item \textbf{Linguagem de desenvolvimento:} Python 3.x com bibliotecas Streamlit, Plotly, Pandas e FPDF.
-\end{itemize}
+A pesquisa será conduzida através das seguintes etapas:
 
-\subsection{Cenários de Falhas}
-
-Foram catalogados cenários controlados de falhas em Terraform, organizados em categorias:
-\begin{itemize}
-    \item \textbf{Erros de sintaxe:} Ausência de chaves, aspas não fechadas, blocos incompletos.
-    \item \textbf{Erros de dependência:} Dependências cíclicas entre recursos, referências a recursos inexistentes.
-    \item \textbf{Conflitos de recursos:} Portas duplicadas, nomes de containers em conflito.
-    \item \textbf{Erros de provedor:} Imagens Docker inexistentes, configurações inválidas de rede.
-    \item \textbf{Erros de variáveis:} Variáveis não declaradas, tipos incompatíveis, valores padrão ausentes.
-\end{itemize}
-
-Cada cenário consiste em um arquivo \texttt{main.tf} com um erro proposital e um arquivo de metadados descrevendo o tipo de falha esperada.
-
-\subsection{Pipeline de Análise}
-
-O pipeline automatizado opera da seguinte forma:
 \begin{enumerate}
-    \item O script de automação (\texttt{loop\_runner.py}) seleciona um cenário de falha e um modelo de IA em esquema \textit{round-robin}.
-    \item O Terraform é executado no cenário selecionado (\texttt{terraform init} seguido de \texttt{terraform plan/apply}).
-    \item O log de erro resultante é capturado automaticamente via \texttt{subprocess}.
-    \item O script lê o conteúdo do arquivo \texttt{main.tf} correspondente.
-    \item Um prompt estruturado é montado combinando: (a) o papel do modelo (engenheiro DevOps sênior), (b) o código-fonte completo, (c) o log de erro integral, e (d) as instruções de formato de resposta.
-    \item O prompt é enviado à API local do Ollama (\texttt{localhost:11434/api/generate}).
-    \item A resposta do modelo, o tempo de processamento e a estimativa de \textit{tokens} são registrados em arquivo CSV e, opcionalmente, em banco PostgreSQL.
-    \item O ciclo repete-se para cada combinação modelo/cenário pelo número de iterações configurado.
+    \item[a.] \textbf{Pesquisa Bibliográfica e Documental:} Levantamento de literatura científica e análise aprofundada da documentação oficial de ferramentas de IaC (com foco no Terraform) e provedores de nuvem para embasar os padrões de erro.
+    \item[b.] \textbf{Modelagem do Fluxo (Arquitetura de Solução):} Criação de diagramas arquiteturais detalhando o processo ideal de captura do log, sanitização (remoção de dados sensíveis ou tokens) e injeção de contexto (\textit{context prompting}) no LLM.
+    \item[c.] \textbf{Coleta de Dados (Simulação):} Criação de um ambiente de laboratório isolado para induzir falhas controladas de provisionamento em scripts declarativos. Os logs de erro gerados por essas falhas comporão a amostra de dados empíricos do projeto.
+    \item[d.] \textbf{Testes e Análise de Resultados:} Os logs coletados serão submetidos a LLMs utilizando o método estruturado proposto. A análise dos dados será qualitativa, avaliando as respostas da IA com base em três critérios de validação: (a) Assertividade na identificação da causa raiz; (b) Aderência da correção proposta à documentação oficial; e (c) Segurança da refatoração sugerida perante boas práticas de arquitetura em nuvem.
 \end{enumerate}
-
-\subsection{Métricas de Avaliação}
-
-Os modelos são avaliados segundo as seguintes métricas:
-\begin{itemize}
-    \item \textbf{Assertividade:} Capacidade de identificar corretamente a causa raiz da falha (avaliação qualitativa por inspeção do pesquisador).
-    \item \textbf{Tempo de resposta:} Tempo total de processamento da IA, em segundos, desde o envio do prompt até a resposta completa.
-    \item \textbf{Volume de \textit{tokens}:} Quantidade estimada de \textit{tokens} na resposta gerada.
-    \item \textbf{Throughput (\textit{tokens}/segundo):} Razão entre o volume de \textit{tokens} e o tempo de resposta, indicando a eficiência computacional.
-    \item \textbf{Aderência à documentação:} Grau em que as correções sugeridas seguem as melhores práticas da documentação oficial do Terraform.
-\end{itemize}
-
-\subsection{Análise dos Resultados}
-
-Os dados coletados são analisados por meio de:
-\begin{itemize}
-    \item Estatísticas descritivas (média, mediana, moda, desvio-padrão, mínimo e máximo) globais e por modelo.
-    \item Filtragem automática de \textit{outliers} via método IQR (Intervalo Interquartil) e limite no percentil 97.
-    \item Visualizações gráficas: \textit{box plots}, gráficos \textit{violin}, histogramas de distribuição, \textit{heatmaps}, gráficos de dispersão e gráficos radar comparativos.
-    \item Exportação dos resultados em formato CSV e PDF para inclusão em relatórios acadêmicos.
-\end{itemize}

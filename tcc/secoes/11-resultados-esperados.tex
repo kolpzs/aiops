@@ -1,16 +1,8 @@
 \section{RESULTADOS ESPERADOS}
 
-Com a realização desta pesquisa, espera-se alcançar os seguintes resultados:
+Espera-se, ao final desta pesquisa, entregar um documento de arquitetura detalhado que estabeleça um fluxo metodológico seguro para a análise de logs de provisionamento utilizando Inteligência Artificial Generativa.
 
-\begin{itemize}
-    \item \textbf{Validação da abordagem:} Demonstrar que modelos de IA generativa executados localmente são capazes de analisar logs de falhas em Terraform e identificar corretamente a causa raiz em uma parcela significativa dos cenários avaliados, validando a viabilidade da abordagem proposta.
-    
-    \item \textbf{Comparativo entre modelos:} Produzir uma análise comparativa quantitativa entre os três modelos avaliados (CodeLlama, DeepSeek-Coder e Qwen2.5-Coder), identificando pontos fortes e limitações de cada um em termos de assertividade, tempo de resposta e qualidade das sugestões de correção.
-    
-    \item \textbf{Ferramenta reutilizável:} Disponibilizar como produto da pesquisa um MVP funcional composto por: (a) o script de automação (\texttt{loop\_runner.py}) para execução de experimentos em lote; (b) o \textit{dashboard} Streamlit para visualização e análise dos resultados; e (c) o catálogo de cenários de falhas em Terraform para uso em pesquisas futuras.
-    
-    \item \textbf{Contribuição para a área de AIOps:} Fornecer evidências empíricas que contribuam para o corpo de conhecimento em AIOps (\textit{Artificial Intelligence for IT Operations}), especificamente na interseção entre IaC e IA generativa, área ainda com poucos estudos publicados.
-    
-    \item \textbf{Guia de boas práticas:} Consolidar recomendações sobre a técnica de \textit{context prompting} para análise de logs de infraestrutura, incluindo a estrutura de prompt que produziu os melhores resultados nos experimentos.
-\end{itemize}
+Como contribuições teóricas e metodológicas, a pesquisa fornecerá um conjunto de diretrizes estruturadas e métricas qualitativas que permitirão às equipes de engenharia avaliar a assertividade das sugestões dadas por LLMs no ecossistema de Infraestrutura como Código.
+
+Do ponto de vista prático, espera-se validar a hipótese de que a injeção de contexto técnico adequado mitiga o risco de alucinações da IA. Como benefício direto, a adoção do método proposto almeja reduzir significativamente o tempo operacional gasto no troubleshooting de falhas de pipeline, garantindo que as correções aplicadas sigam rigorosamente as melhores práticas documentadas, otimizando assim a resiliência das esteiras de entrega contínua.
 \newpage
