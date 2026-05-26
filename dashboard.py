@@ -1211,8 +1211,8 @@ def render_results_tab():
     fig_box = go.Figure()
     models_sorted = sorted(set(r["modelo"] for r in ai_rows_clean))
     # Distinct, accessible color palette for charts
-    colors = ["#2196F3", "#FF5722", "#4CAF50", "#9C27B0", "#FF9800", "#00BCD4"]
-    box_colors = ["#2196F3", "#FF5722", "#4CAF50", "#9C27B0", "#FF9800"]
+    colors = ["#FF6B35", "#7B2D8B", "#2ECC71", "#E91E8C", "#F1C40F", "#1ABC9C", "#3498DB", "#E74C3C"]
+    box_colors = colors  # alias for consistency
     for idx, m in enumerate(models_sorted):
         times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
         fig_box.add_trace(go.Box(
@@ -1243,8 +1243,8 @@ def render_results_tab():
             box_visible=True,
             meanline_visible=True,
             fillcolor=colors[idx % len(colors)],
-            opacity=0.7,
-            line_color="black",
+            opacity=0.8,
+            line=dict(color=colors[idx % len(colors)], width=2),
         ))
     fig_violin.update_layout(
         yaxis_title="Tokens estimados",
@@ -1383,7 +1383,7 @@ def render_results_tab():
         z=z_tok_matrix,
         x=cenarios_sorted,
         y=models_sorted,
-        colorscale="Blues",
+        colorscale="Viridis",
         text=[[f"{v:.0f}" for v in row] for row in z_tok_matrix],
         texttemplate="%{text}",
         textfont={"size": 11},
