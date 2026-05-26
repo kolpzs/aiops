@@ -938,7 +938,113 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
 
 
 # ---------------------------------------------------------------------------
-# UI: Tab - Results & Charts
+# PDF Export helper
+# ---------------------------------------------------------------------------
+def _generate_results_pdf(data, ai_rows_clean, models_sorted, colors):
+    """Build a PDF report from the results tab data and charts."""
+    import io
+    import plotly.graph_objects as go
+    from statistics import mean, median, mode, stdev
+    from fpdf import FPDF
+
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 12, "Resultados - TCC MVP AIOps", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.set_font("Helvetica", "", 10)
+    pdf.cell(0, 8, f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M')}", new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.ln(6)
+
+    # ── Summary table ──────────────────────────────────────────────────────────
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 9, "Estatisticas por Modelo", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Helvetica", "", 8)
+
+    col_w = [52, 22, 22, 22, 22, 22, 22]
+    headers = ["Modelo", "Execucoes", "Min(s)", "Max(s)", "Media(s)", "Mediana(s)", "Moda(s)"]
+    for i, h in enumerate(headers):
+        pdf.cell(col_w[i], 7, h, border=1, align="C")
+    pdf.ln()
+    for m in models_sorted:
+        times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        if not times:
+            continue
+        try:
+            m_mode = f"{mode(times):.1f}"
+        except Exception:
+            m_mode = "N/A"
+        row_vals = [m, str(len(times)), f"{min(times):.1f}", f"{max(times):.1f}",
+                    f"{mean(times):.1f}", f"{median(times):.1f}", m_mode]
+        for i, v in enumerate(row_vals):
+            pdf.cell(col_w[i], 7, v, border=1, align="C")
+        pdf.ln()
+
+    pdf.ln(6)
+
+    # ── Charts ─────────────────────────────────────────────────────────────────
+    def _fig_to_bytes(fig):
+        return fig.to_image(format="png", width=900, height=400, engine="kaleido")
+
+    # Box plot — response time
+    fig_box = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        fig_box.add_trace(go.Box(y=times, name=m, marker_color=colors[idx % len(colors)], boxmean="sd"))
+    fig_box.update_layout(title="Box Plot - Tempo de Resposta por Modelo", yaxis_title="Tempo (s)", height=400)
+
+    # Violin plot — tokens
+    fig_violin = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        toks = [int(r["tokens_estimados"]) for r in ai_rows_clean if r["modelo"] == m and int(r["tokens_estimados"]) > 0]
+        fig_violin.add_trace(go.Violin(y=toks, name=m, box_visible=True, meanline_visible=True,
+                                       fillcolor=colors[idx % len(colors)], opacity=0.7, line_color="black"))
+    fig_violin.update_layout(title="Violin Plot - Tokens por Modelo", yaxis_title="Tokens estimados", height=400)
+
+    for fig, title in [(fig_box, "Box Plot - Tempo de Resposta"), (fig_violin, "Violin Plot - Tokens")]:
+        img_bytes = _fig_to_bytes(fig)
+        img_buf = io.BytesIO(img_bytes)
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(0, 9, title, new_x="LMARGIN", new_y="NEXT")
+        # Save temp image
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp.write(img_bytes)
+            tmp_path = tmp.name
+        pdf.image(tmp_path, x=10, y=None, w=190)
+        import os as _os
+        _os.unlink(tmp_path)
+
+    # Per-model histograms
+    for idx, m in enumerate(models_sorted):
+        m_times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        if not m_times:
+            continue
+        fig_h = go.Figure()
+        fig_h.add_trace(go.Histogram(x=m_times, nbinsx=30, marker_color=colors[idx % len(colors)], opacity=0.75))
+        m_mean = mean(m_times)
+        m_median = median(m_times)
+        fig_h.add_vline(x=m_mean, line_dash="dash", line_color="#1E88E5", line_width=2,
+                        annotation_text=f"Media: {m_mean:.1f}s")
+        fig_h.add_vline(x=m_median, line_dash="dot", line_color="#43A047", line_width=2,
+                        annotation_text=f"Mediana: {m_median:.1f}s")
+        fig_h.update_layout(title=f"Histograma - {m}", xaxis_title="Tempo (s)", yaxis_title="Frequencia", height=350)
+        img_bytes = _fig_to_bytes(fig_h)
+        import tempfile
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            tmp.write(img_bytes)
+            tmp_path = tmp.name
+        pdf.add_page()
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.cell(0, 9, f"Histograma - {m}", new_x="LMARGIN", new_y="NEXT")
+        pdf.image(tmp_path, x=10, y=None, w=190)
+        import os as _os
+        _os.unlink(tmp_path)
+
+    return bytes(pdf.output())
+
+
 # ---------------------------------------------------------------------------
 def render_results_tab():
     try:
@@ -949,7 +1055,14 @@ def render_results_tab():
     except ImportError:
         HAS_PLOTLY = False
 
-    st.subheader("📊 Resultados e Análise Estatística")
+    try:
+        from fpdf import FPDF
+        import kaleido  # noqa: F401
+        HAS_PDF = True
+    except ImportError:
+        HAS_PDF = False
+
+    st.subheader("Resultados e Análise Estatística")
 
     data = load_csv_results()
     if not data:
@@ -960,7 +1073,7 @@ def render_results_tab():
     all_rows = data
 
     # --- Metrics row ---
-    st.markdown("### 📈 Métricas Gerais")
+    st.markdown("### Métricas Gerais")
     m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
         st.metric("Total execuções", len(all_rows))
@@ -1034,7 +1147,7 @@ def render_results_tab():
 
     # ── Estatísticas Descritivas (tabela resumo) ─────────────────────────────
     st.markdown("---")
-    st.markdown("### 📐 Estatísticas Descritivas")
+    st.markdown("### Estatísticas Descritivas")
 
     def calc_stats(values, label):
         if not values:
@@ -1064,7 +1177,7 @@ def render_results_tab():
     st.dataframe(stats_table, width="stretch", hide_index=True)
 
     # ── Estatísticas por Modelo ──────────────────────────────────────────────
-    st.markdown("### 🤖 Estatísticas por Modelo")
+    st.markdown("### Estatísticas por Modelo")
     model_stats = []
     for m in sorted(set(r["modelo"] for r in ai_rows)):
         m_rows = [r for r in ai_rows if r["modelo"] == m]
@@ -1092,12 +1205,14 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 1: Box Plot — Tempo IA por Modelo ──────────────────────────────
-    st.markdown("### 📦 1. Box Plot — Tempo de Resposta da IA por Modelo")
+    st.markdown("### 1. Box Plot — Tempo de Resposta da IA por Modelo")
     st.caption("Mostra mediana, quartis e outliers para cada modelo.")
 
     fig_box = go.Figure()
     models_sorted = sorted(set(r["modelo"] for r in ai_rows_clean))
-    colors = ["#1E88E5", "#43A047", "#E53935", "#FB8C00", "#8E24AA"]
+    # Distinct, accessible color palette for charts
+    colors = ["#2196F3", "#FF5722", "#4CAF50", "#9C27B0", "#FF9800", "#00BCD4"]
+    box_colors = ["#2196F3", "#FF5722", "#4CAF50", "#9C27B0", "#FF9800"]
     for idx, m in enumerate(models_sorted):
         times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
         fig_box.add_trace(go.Box(
@@ -1117,7 +1232,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 2: Violin Plot — Tokens por Modelo ────────────────────────────
-    st.markdown("### 🎻 2. Violin Plot — Distribuição de Tokens por Modelo")
+    st.markdown("### 2. Violin Plot — Distribuição de Tokens por Modelo")
     st.caption("Densidade de probabilidade + box plot interno. Revela bimodalidades.")
 
     fig_violin = go.Figure()
@@ -1143,7 +1258,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 2.5: Histograma — Distribuição Tempo IA por Modelo ────────────
-    st.markdown("### 📊 2.5. Histograma — Distribuição do Tempo de Resposta por Modelo")
+    st.markdown("### 2.5. Histograma — Distribuição do Tempo de Resposta por Modelo")
     st.caption("Barras mostram frequência. Linhas verticais: média (tracejada), mediana (pontilhada), moda (sólida).")
 
     for idx, m in enumerate(models_sorted):
@@ -1185,7 +1300,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 3: Histograma — Distribuição tok/s com Média/Mediana ───────────
-    st.markdown("### 📊 3. Histograma — Eficiência (tokens/s) com Média e Mediana")
+    st.markdown("### 3. Histograma — Eficiência (tokens/s) com Média e Mediana")
     st.caption("Linhas verticais: média (azul), mediana (verde), moda (vermelho).")
 
     fig_hist = go.Figure()
@@ -1218,7 +1333,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 4: Heatmap — Tempo IA médio (Modelo × Cenário) ─────────────────
-    st.markdown("### 🗺️ 4. Heatmap — Tempo médio da IA (Modelo × Cenário)")
+    st.markdown("### 4. Heatmap — Tempo médio da IA (Modelo × Cenário)")
     st.caption("Quão rápido cada modelo resolve cada tipo de falha. Mais escuro = mais lento.")
 
     cenarios_sorted = sorted(set(r["cenario"] for r in ai_rows_clean))
@@ -1252,7 +1367,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 5: Heatmap — Tokens médios (Modelo × Cenário) ──────────────────
-    st.markdown("### 🗺️ 5. Heatmap — Tokens gerados (Modelo × Cenário)")
+    st.markdown("### 5. Heatmap — Tokens gerados (Modelo × Cenário)")
     st.caption("Mais escuro = respostas mais longas. Respostas maiores podem indicar mais detalhamento.")
 
     z_tok_matrix = []
@@ -1285,7 +1400,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 6: Grouped Bar — Comparativo tok/s por modelo e cenário ────────
-    st.markdown("### ⚡ 6. Eficiência por Modelo × Cenário (tok/s)")
+    st.markdown("### 6. Eficiência por Modelo × Cenário (tok/s)")
     st.caption("Mais alto = modelo respondeu mais rápido nesse cenário.")
 
     fig_grouped = go.Figure()
@@ -1318,7 +1433,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 7: Box Plot — Tempo Terraform por Cenário ──────────────────────
-    st.markdown("### 🔧 7. Box Plot — Tempo Terraform por Cenário")
+    st.markdown("### 7. Box Plot — Tempo Terraform por Cenário")
     st.caption("Variabilidade do pipeline de IaC. Cenários Docker tendem a ser mais lentos.")
 
     fig_tf_box = go.Figure()
@@ -1340,7 +1455,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 8: Scatter — Tempo IA vs Tokens (correlação) ───────────────────
-    st.markdown("### 🔬 8. Correlação — Tempo de IA vs Tokens Gerados")
+    st.markdown("### 8. Correlação — Tempo de IA vs Tokens Gerados")
     st.caption("Esperado: relação linear (mais tokens = mais tempo). Desvios indicam variação na velocidade.")
 
     fig_scatter = go.Figure()
@@ -1367,7 +1482,7 @@ def render_results_tab():
     st.markdown("---")
 
     # ── CHART 9: Radar — Comparativo geral entre modelos ─────────────────────
-    st.markdown("### 🕸️ 9. Radar — Perfil Comparativo dos Modelos")
+    st.markdown("### 9. Radar — Perfil Comparativo dos Modelos")
     st.caption("Normalizado 0-1. Maior área = melhor desempenho geral.")
 
     # Compute metrics per model (normalized)
@@ -1417,19 +1532,37 @@ def render_results_tab():
 
     st.markdown("---")
 
-    # --- Tabela histórico + download CSV ---
-    st.markdown("### 📋 Histórico completo")
+    # --- Tabela histórico + download CSV + PDF ---
+    st.markdown("### Historico completo")
     st.dataframe(data, width="stretch", hide_index=True)
 
-    csv_content = CSV_FILE.read_text(encoding="utf-8")
-    if st.download_button(
-        "⬇️ Baixar CSV completo",
-        data=csv_content,
-        file_name="resultados_tcc_mvp.csv",
-        mime="text/csv",
-        width="stretch",
-    ):
-        add_activity("⬇️", "CSV de resultados baixado")
+    dl_col1, dl_col2 = st.columns(2)
+
+    with dl_col1:
+        csv_content = CSV_FILE.read_text(encoding="utf-8")
+        if st.download_button(
+            "Baixar CSV completo",
+            data=csv_content,
+            file_name="resultados_tcc_mvp.csv",
+            mime="text/csv",
+            width="stretch",
+        ):
+            add_activity("", "CSV de resultados baixado")
+
+    with dl_col2:
+        if HAS_PDF and HAS_PLOTLY:
+            if st.button("Gerar PDF dos Resultados", width="stretch"):
+                with st.spinner("Gerando PDF..."):
+                    pdf_bytes = _generate_results_pdf(data, ai_rows_clean, models_sorted, colors)
+                st.download_button(
+                    "Baixar PDF",
+                    data=pdf_bytes,
+                    file_name="resultados_tcc_mvp.pdf",
+                    mime="application/pdf",
+                    width="stretch",
+                )
+        else:
+            st.info("Instale fpdf2 e kaleido para exportar PDF.")
 
 
 # ---------------------------------------------------------------------------
