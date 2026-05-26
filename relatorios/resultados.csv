@@ -7,3 +7,766 @@ timestamp,cenario,titulo,modelo,timeout_config,etapa_falha,status,tempo_terrafor
 2026-05-25T15:45:49,02-ciclo,Dependencia ciclica entre recursos,qwen2.5-coder:1.5b,300,validate,failure-captured:validate,0.04,132.03,364,sim,relatorios/02-ciclo.md
 2026-05-25T15:48:14,03-nome-invalido,Nome fora do padrao esperado,qwen2.5-coder:1.5b,300,plan,failure-captured:plan,0.07,145.39,328,sim,relatorios/03-nome-invalido.md
 2026-05-25T16:11:24,04-env-ausente,Container com variável de ambiente ausente,qwen2.5-coder:1.5b,300,nenhuma,app-failure-captured:container-crash,0.95,468.16,1008,sim,relatorios/04-env-ausente.md
+2026-05-25T22:44:04,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,300,init,failure-captured:init,0.05,35.1,430,sim,relatorios\01-sintaxe.md
+2026-05-25T22:44:10,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,300,validate,failure-captured:validate,0.09,6.06,677,sim,relatorios\02-ciclo.md
+2026-05-25T22:44:15,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,300,plan,failure-captured:plan,0.14,4.71,502,sim,relatorios\03-nome-invalido.md
+2026-05-25T22:44:30,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,300,apply,failure-captured:apply,3.03,7.88,725,sim,relatorios\04-env-ausente.md
+2026-05-25T22:44:47,05-porta-conflito,Conflito de porta entre containers,codellama:7b,300,apply,failure-captured:apply,3.78,8.38,707,sim,relatorios\05-porta-conflito.md
+2026-05-25T22:45:00,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,300,apply,failure-captured:apply,1.72,6.74,629,sim,relatorios\06-dependencia-quebrada.md
+2026-05-25T22:45:16,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,300,apply,failure-captured:apply,1.94,9.23,872,sim,relatorios\07-postgres.md
+2026-05-25T23:51:50,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,300,init,failure-captured:init,0.05,5.31,432,sim,relatorios\01-sintaxe.md
+2026-05-25T23:51:55,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,300,validate,failure-captured:validate,0.08,5.06,578,sim,relatorios\02-ciclo.md
+2026-05-25T23:52:00,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,300,plan,failure-captured:plan,0.14,5.18,567,sim,relatorios\03-nome-invalido.md
+2026-05-25T23:55:14,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,23.32,567,sim,relatorios\01-sintaxe.md
+2026-05-25T23:55:40,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,26.27,625,sim,relatorios\02-ciclo.md
+2026-05-25T23:55:58,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,17.52,395,sim,relatorios\03-nome-invalido.md
+2026-05-25T23:56:21,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,17.76,336,sim,relatorios\04-env-ausente.md
+2026-05-25T23:57:01,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,35.33,591,sim,relatorios\05-porta-conflito.md
+2026-05-25T23:57:28,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,21.77,407,sim,relatorios\06-dependencia-quebrada.md
+2026-05-25T23:58:21,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,48.22,893,sim,relatorios\07-postgres.md
+2026-05-25T23:58:35,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.77,346,sim,relatorios\01-sintaxe.md
+2026-05-25T23:59:04,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.58,694,sim,relatorios\02-ciclo.md
+2026-05-25T23:59:22,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,18.56,439,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:00:00,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,32.18,607,sim,relatorios\04-env-ausente.md
+2026-05-26T00:01:07,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,61.94,1023,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:02:02,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,50.11,936,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:02:39,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,32.72,630,sim,relatorios\07-postgres.md
+2026-05-26T00:02:53,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.82,351,sim,relatorios\01-sintaxe.md
+2026-05-26T00:03:12,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,18.56,464,sim,relatorios\02-ciclo.md
+2026-05-26T00:03:34,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,22.36,530,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:04:12,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,32.26,615,sim,relatorios\04-env-ausente.md
+2026-05-26T00:06:01,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,104.47,1813,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:06:32,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,25.71,485,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:07:15,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,38.03,726,sim,relatorios\07-postgres.md
+2026-05-26T00:07:27,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,11.76,298,sim,relatorios\01-sintaxe.md
+2026-05-26T00:07:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,24.79,610,sim,relatorios\02-ciclo.md
+2026-05-26T00:08:21,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,29.2,678,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:09:08,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,42.31,791,sim,relatorios\04-env-ausente.md
+2026-05-26T00:10:00,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,46.58,789,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:10:37,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,31.73,609,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:11:15,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,33.77,650,sim,relatorios\07-postgres.md
+2026-05-26T00:11:27,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,11.1,283,sim,relatorios\01-sintaxe.md
+2026-05-26T00:11:53,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,26.09,641,sim,relatorios\02-ciclo.md
+2026-05-26T00:12:19,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.38,616,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:13:04,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,40.13,749,sim,relatorios\04-env-ausente.md
+2026-05-26T00:13:48,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,38.45,640,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:14:11,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,17.93,339,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:14:39,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,23.18,447,sim,relatorios\07-postgres.md
+2026-05-26T00:14:55,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.1,404,sim,relatorios\01-sintaxe.md
+2026-05-26T00:15:24,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,29.04,705,sim,relatorios\02-ciclo.md
+2026-05-26T00:15:48,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.88,559,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:16:19,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,25.58,482,sim,relatorios\04-env-ausente.md
+2026-05-26T00:17:01,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,37.38,621,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:17:48,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,41.46,777,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:18:30,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,37.35,706,sim,relatorios\07-postgres.md
+2026-05-26T00:18:51,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.27,526,sim,relatorios\01-sintaxe.md
+2026-05-26T00:19:22,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,30.03,725,sim,relatorios\02-ciclo.md
+2026-05-26T00:19:44,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.72,530,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:20:28,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,38.69,723,sim,relatorios\04-env-ausente.md
+2026-05-26T00:21:19,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,45.64,758,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:21:51,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,26.67,498,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:22:24,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,28.79,544,sim,relatorios\07-postgres.md
+2026-05-26T00:22:36,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,12.11,302,sim,relatorios\01-sintaxe.md
+2026-05-26T00:23:08,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,31.66,756,sim,relatorios\02-ciclo.md
+2026-05-26T00:23:32,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.75,550,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:24:00,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,23.11,437,sim,relatorios\04-env-ausente.md
+2026-05-26T00:25:04,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,58.43,963,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:25:27,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,18.3,346,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:26:26,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.57,53.7,997,sim,relatorios\07-postgres.md
+2026-05-26T00:26:45,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.74,466,sim,relatorios\01-sintaxe.md
+2026-05-26T00:27:05,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.4,504,sim,relatorios\02-ciclo.md
+2026-05-26T00:27:28,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.23,545,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:28:15,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,41.29,775,sim,relatorios\04-env-ausente.md
+2026-05-26T00:28:55,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.58,35.4,588,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:29:35,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,35.09,660,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:30:22,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,41.71,785,sim,relatorios\07-postgres.md
+2026-05-26T00:30:38,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.65,392,sim,relatorios\01-sintaxe.md
+2026-05-26T00:30:57,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,19.72,488,sim,relatorios\02-ciclo.md
+2026-05-26T00:31:21,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.62,554,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:31:47,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,21.22,402,sim,relatorios\04-env-ausente.md
+2026-05-26T00:32:35,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,42.15,696,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:33:03,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,23.77,451,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:33:40,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,31.36,592,sim,relatorios\07-postgres.md
+2026-05-26T00:33:56,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.23,403,sim,relatorios\01-sintaxe.md
+2026-05-26T00:34:24,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,27.92,675,sim,relatorios\02-ciclo.md
+2026-05-26T00:34:42,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,17.64,416,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:35:05,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,18.5,345,sim,relatorios\04-env-ausente.md
+2026-05-26T00:35:46,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,35.59,600,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:36:40,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,49.16,910,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:37:29,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,43.46,811,sim,relatorios\07-postgres.md
+2026-05-26T00:37:44,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.3,379,sim,relatorios\01-sintaxe.md
+2026-05-26T00:38:16,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,31.88,760,sim,relatorios\02-ciclo.md
+2026-05-26T00:38:40,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.65,548,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:39:31,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,46.79,861,sim,relatorios\04-env-ausente.md
+2026-05-26T00:40:34,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,57.38,945,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:41:01,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,21.61,404,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:41:55,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,49.55,920,sim,relatorios\07-postgres.md
+2026-05-26T00:42:11,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.89,393,sim,relatorios\01-sintaxe.md
+2026-05-26T00:42:39,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,27.93,677,sim,relatorios\02-ciclo.md
+2026-05-26T00:42:59,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,19.76,462,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:43:35,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,31.36,590,sim,relatorios\04-env-ausente.md
+2026-05-26T00:44:22,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,41.23,684,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:44:53,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,26.28,492,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:45:37,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,39.67,742,sim,relatorios\07-postgres.md
+2026-05-26T00:45:50,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,12.26,304,sim,relatorios\01-sintaxe.md
+2026-05-26T00:46:09,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,18.74,457,sim,relatorios\02-ciclo.md
+2026-05-26T00:46:39,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,30.06,688,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:47:17,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,32.99,611,sim,relatorios\04-env-ausente.md
+2026-05-26T00:47:53,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,31.6,529,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:48:24,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,25.44,484,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:48:57,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,28.45,530,sim,relatorios\07-postgres.md
+2026-05-26T00:49:07,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,9.89,247,sim,relatorios\01-sintaxe.md
+2026-05-26T00:49:28,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.51,500,sim,relatorios\02-ciclo.md
+2026-05-26T00:49:48,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,20.24,470,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:50:19,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,25.74,482,sim,relatorios\04-env-ausente.md
+2026-05-26T00:51:05,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,41.24,687,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:51:42,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,31.67,596,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:52:13,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.57,26.57,509,sim,relatorios\07-postgres.md
+2026-05-26T00:52:31,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.0,422,sim,relatorios\01-sintaxe.md
+2026-05-26T00:53:01,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,30.08,720,sim,relatorios\02-ciclo.md
+2026-05-26T00:53:23,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.24,516,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:53:54,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,26.36,489,sim,relatorios\04-env-ausente.md
+2026-05-26T00:54:39,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,39.03,646,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:55:05,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,20.95,390,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:55:56,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,46.71,861,sim,relatorios\07-postgres.md
+2026-05-26T00:56:06,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,10.24,255,sim,relatorios\01-sintaxe.md
+2026-05-26T00:56:27,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,20.44,494,sim,relatorios\02-ciclo.md
+2026-05-26T00:56:46,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,19.11,442,sim,relatorios\03-nome-invalido.md
+2026-05-26T00:57:14,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,22.28,413,sim,relatorios\04-env-ausente.md
+2026-05-26T00:58:09,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,50.37,818,sim,relatorios\05-porta-conflito.md
+2026-05-26T00:58:39,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,25.23,475,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T00:59:06,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,21.79,414,sim,relatorios\07-postgres.md
+2026-05-26T00:59:29,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,23.22,567,sim,relatorios\01-sintaxe.md
+2026-05-26T00:59:50,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.45,499,sim,relatorios\02-ciclo.md
+2026-05-26T01:00:20,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,30.12,680,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:00:50,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,25.13,466,sim,relatorios\04-env-ausente.md
+2026-05-26T01:01:37,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,42.03,685,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:02:04,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,21.33,398,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:02:44,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,35.06,653,sim,relatorios\07-postgres.md
+2026-05-26T01:03:03,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.65,478,sim,relatorios\01-sintaxe.md
+2026-05-26T01:03:29,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.87,617,sim,relatorios\02-ciclo.md
+2026-05-26T01:03:58,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,28.31,645,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:04:46,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,42.81,788,sim,relatorios\04-env-ausente.md
+2026-05-26T01:05:30,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,39.27,649,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:06:01,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,26.02,486,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:06:33,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,27.37,517,sim,relatorios\07-postgres.md
+2026-05-26T01:06:50,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.14,399,sim,relatorios\01-sintaxe.md
+2026-05-26T01:07:08,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,18.76,458,sim,relatorios\02-ciclo.md
+2026-05-26T01:07:29,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.26,468,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:08:14,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,39.73,735,sim,relatorios\04-env-ausente.md
+2026-05-26T01:08:37,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,17.97,295,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:09:19,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,37.55,693,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:09:59,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,34.87,645,sim,relatorios\07-postgres.md
+2026-05-26T01:10:16,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,17.16,416,sim,relatorios\01-sintaxe.md
+2026-05-26T01:10:34,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,17.43,423,sim,relatorios\02-ciclo.md
+2026-05-26T01:10:54,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,19.95,458,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:11:44,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,45.11,828,sim,relatorios\04-env-ausente.md
+2026-05-26T01:12:55,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,65.75,1062,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:13:35,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,34.87,646,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:14:23,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,43.02,800,sim,relatorios\07-postgres.md
+2026-05-26T01:14:34,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,11.33,281,sim,relatorios\01-sintaxe.md
+2026-05-26T01:14:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,18.24,445,sim,relatorios\02-ciclo.md
+2026-05-26T01:15:06,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,13.9,325,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:15:52,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,40.73,751,sim,relatorios\04-env-ausente.md
+2026-05-26T01:16:20,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,22.62,375,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:16:56,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,31.37,582,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:17:32,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,30.65,572,sim,relatorios\07-postgres.md
+2026-05-26T01:17:52,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,20.19,489,sim,relatorios\01-sintaxe.md
+2026-05-26T01:18:17,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.38,603,sim,relatorios\02-ciclo.md
+2026-05-26T01:18:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,19.61,452,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:19:36,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,53.45,969,sim,relatorios\04-env-ausente.md
+2026-05-26T01:20:26,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,45.24,740,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:21:07,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,36.11,671,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:21:44,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,31.63,591,sim,relatorios\07-postgres.md
+2026-05-26T01:22:02,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.41,446,sim,relatorios\01-sintaxe.md
+2026-05-26T01:22:37,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,34.73,812,sim,relatorios\02-ciclo.md
+2026-05-26T01:22:50,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,13.22,306,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:23:20,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,24.85,459,sim,relatorios\04-env-ausente.md
+2026-05-26T01:24:11,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,45.9,753,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:24:46,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,29.9,550,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:25:35,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,43.54,800,sim,relatorios\07-postgres.md
+2026-05-26T01:25:54,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.46,470,sim,relatorios\01-sintaxe.md
+2026-05-26T01:26:14,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.16,483,sim,relatorios\02-ciclo.md
+2026-05-26T01:26:35,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.46,470,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:27:02,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.53,22.23,411,sim,relatorios\04-env-ausente.md
+2026-05-26T01:28:03,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,55.89,904,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:28:46,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,37.83,705,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:29:31,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,40.2,742,sim,relatorios\07-postgres.md
+2026-05-26T01:29:48,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,16.38,400,sim,relatorios\01-sintaxe.md
+2026-05-26T01:30:18,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,30.53,720,sim,relatorios\02-ciclo.md
+2026-05-26T01:30:33,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,14.37,334,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:31:08,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,29.89,551,sim,relatorios\04-env-ausente.md
+2026-05-26T01:31:45,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,32.01,528,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:32:36,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,46.53,850,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:33:08,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,27.35,509,sim,relatorios\07-postgres.md
+2026-05-26T01:33:25,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,16.59,403,sim,relatorios\01-sintaxe.md
+2026-05-26T01:33:50,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,24.79,587,sim,relatorios\02-ciclo.md
+2026-05-26T01:34:21,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,30.37,678,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:35:02,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,36.42,663,sim,relatorios\04-env-ausente.md
+2026-05-26T01:35:49,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,41.83,683,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:36:33,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,38.65,709,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:37:14,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.94,679,sim,relatorios\07-postgres.md
+2026-05-26T01:37:28,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.48,328,sim,relatorios\01-sintaxe.md
+2026-05-26T01:37:54,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,26.28,620,sim,relatorios\02-ciclo.md
+2026-05-26T01:38:18,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.24,526,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:39:00,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,37.65,688,sim,relatorios\04-env-ausente.md
+2026-05-26T01:39:58,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,52.58,853,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:40:34,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,31.21,574,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:41:16,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,37.24,688,sim,relatorios\07-postgres.md
+2026-05-26T01:41:48,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,31.26,737,sim,relatorios\01-sintaxe.md
+2026-05-26T01:42:15,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,27.11,642,sim,relatorios\02-ciclo.md
+2026-05-26T01:42:42,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.99,613,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:43:07,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,19.5,358,sim,relatorios\04-env-ausente.md
+2026-05-26T01:43:54,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.5,42.4,688,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:44:25,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,25.86,480,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:45:08,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,38.43,713,sim,relatorios\07-postgres.md
+2026-05-26T01:45:27,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.93,460,sim,relatorios\01-sintaxe.md
+2026-05-26T01:45:53,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.4,604,sim,relatorios\02-ciclo.md
+2026-05-26T01:46:20,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.87,610,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:46:44,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,19.24,353,sim,relatorios\04-env-ausente.md
+2026-05-26T01:47:35,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,46.4,754,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:48:13,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,32.13,591,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:48:54,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,37.01,677,sim,relatorios\07-postgres.md
+2026-05-26T01:49:19,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,24.54,581,sim,relatorios\01-sintaxe.md
+2026-05-26T01:49:48,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,29.25,681,sim,relatorios\02-ciclo.md
+2026-05-26T01:50:20,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,31.81,704,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:50:45,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,19.33,354,sim,relatorios\04-env-ausente.md
+2026-05-26T01:51:45,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,55.57,891,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:52:38,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,47.97,868,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:53:05,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,21.91,406,sim,relatorios\07-postgres.md
+2026-05-26T01:53:21,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.94,385,sim,relatorios\01-sintaxe.md
+2026-05-26T01:53:45,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,23.99,566,sim,relatorios\02-ciclo.md
+2026-05-26T01:54:30,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,44.18,962,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:55:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,38.85,703,sim,relatorios\04-env-ausente.md
+2026-05-26T01:56:13,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,54.5,876,sim,relatorios\05-porta-conflito.md
+2026-05-26T01:57:12,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,53.85,971,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T01:57:39,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,22.14,410,sim,relatorios\07-postgres.md
+2026-05-26T01:57:57,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.81,429,sim,relatorios\01-sintaxe.md
+2026-05-26T01:58:16,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.04,451,sim,relatorios\02-ciclo.md
+2026-05-26T01:58:39,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.11,521,sim,relatorios\03-nome-invalido.md
+2026-05-26T01:59:19,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,34.31,622,sim,relatorios\04-env-ausente.md
+2026-05-26T02:00:32,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,67.81,1072,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:01:03,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,26.86,491,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:01:56,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,47.42,859,sim,relatorios\07-postgres.md
+2026-05-26T02:02:17,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.28,507,sim,relatorios\01-sintaxe.md
+2026-05-26T02:02:44,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,26.55,622,sim,relatorios\02-ciclo.md
+2026-05-26T02:03:07,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.1,518,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:03:45,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.67,33.09,600,sim,relatorios\04-env-ausente.md
+2026-05-26T02:04:21,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,30.88,500,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:05:05,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,38.55,703,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:05:48,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,38.4,702,sim,relatorios\07-postgres.md
+2026-05-26T02:06:05,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,17.16,412,sim,relatorios\01-sintaxe.md
+2026-05-26T02:06:30,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,24.9,584,sim,relatorios\02-ciclo.md
+2026-05-26T02:06:55,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,24.89,557,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:07:35,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,34.98,636,sim,relatorios\04-env-ausente.md
+2026-05-26T02:08:15,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,34.78,562,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:08:35,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,14.91,272,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:09:21,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,40.99,747,sim,relatorios\07-postgres.md
+2026-05-26T02:09:44,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,22.98,545,sim,relatorios\01-sintaxe.md
+2026-05-26T02:10:14,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,29.63,689,sim,relatorios\02-ciclo.md
+2026-05-26T02:10:34,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,19.89,452,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:11:32,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,53.28,949,sim,relatorios\04-env-ausente.md
+2026-05-26T02:12:29,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.59,52.1,837,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:13:01,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.51,26.54,487,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:13:18,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,12.7,234,sim,relatorios\07-postgres.md
+2026-05-26T02:13:38,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.32,464,sim,relatorios\01-sintaxe.md
+2026-05-26T02:14:04,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.74,604,sim,relatorios\02-ciclo.md
+2026-05-26T02:14:24,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.48,462,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:15:08,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,38.51,695,sim,relatorios\04-env-ausente.md
+2026-05-26T02:16:06,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,53.55,856,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:16:50,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,38.47,703,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:17:29,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,34.05,621,sim,relatorios\07-postgres.md
+2026-05-26T02:17:51,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.66,512,sim,relatorios\01-sintaxe.md
+2026-05-26T02:18:12,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,21.75,510,sim,relatorios\02-ciclo.md
+2026-05-26T02:18:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,24.44,549,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:19:28,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,45.81,821,sim,relatorios\04-env-ausente.md
+2026-05-26T02:20:16,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,43.35,702,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:20:54,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,32.29,586,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:21:41,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,42.73,772,sim,relatorios\07-postgres.md
+2026-05-26T02:21:58,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.28,389,sim,relatorios\01-sintaxe.md
+2026-05-26T02:22:18,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,19.83,466,sim,relatorios\02-ciclo.md
+2026-05-26T02:22:47,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,28.96,645,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:23:36,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,43.95,790,sim,relatorios\04-env-ausente.md
+2026-05-26T02:24:09,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,28.54,466,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:24:47,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,32.9,599,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:25:07,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,15.23,279,sim,relatorios\07-postgres.md
+2026-05-26T02:25:18,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,10.19,245,sim,relatorios\01-sintaxe.md
+2026-05-26T02:25:48,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,30.69,709,sim,relatorios\02-ciclo.md
+2026-05-26T02:26:08,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,19.49,439,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:26:41,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.53,28.47,515,sim,relatorios\04-env-ausente.md
+2026-05-26T02:27:20,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,33.1,534,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:27:58,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,33.47,607,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:28:22,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,18.68,345,sim,relatorios\07-postgres.md
+2026-05-26T02:28:42,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.36,486,sim,relatorios\01-sintaxe.md
+2026-05-26T02:29:10,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,27.88,651,sim,relatorios\02-ciclo.md
+2026-05-26T02:29:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.32,588,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:30:05,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,23.04,420,sim,relatorios\04-env-ausente.md
+2026-05-26T02:30:25,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.55,15.55,245,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:31:07,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.52,37.03,664,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:31:56,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,43.85,792,sim,relatorios\07-postgres.md
+2026-05-26T02:32:17,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.07,497,sim,relatorios\01-sintaxe.md
+2026-05-26T02:32:39,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.18,520,sim,relatorios\02-ciclo.md
+2026-05-26T02:32:59,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,19.6,437,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:33:28,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,23.87,433,sim,relatorios\04-env-ausente.md
+2026-05-26T02:34:37,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,64.14,1006,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:35:34,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,51.87,926,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:35:54,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,14.8,270,sim,relatorios\07-postgres.md
+2026-05-26T02:36:13,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.55,466,sim,relatorios\01-sintaxe.md
+2026-05-26T02:36:35,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,21.17,500,sim,relatorios\02-ciclo.md
+2026-05-26T02:36:52,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,16.97,383,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:37:19,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,21.89,392,sim,relatorios\04-env-ausente.md
+2026-05-26T02:38:02,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,37.61,604,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:38:25,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,17.95,325,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:39:17,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,47.37,850,sim,relatorios\07-postgres.md
+2026-05-26T02:39:43,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,25.75,603,sim,relatorios\01-sintaxe.md
+2026-05-26T02:40:09,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,26.68,622,sim,relatorios\02-ciclo.md
+2026-05-26T02:40:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.18,599,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:41:03,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,21.37,388,sim,relatorios\04-env-ausente.md
+2026-05-26T02:41:47,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,39.11,626,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:42:26,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,33.74,613,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:43:06,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,35.37,642,sim,relatorios\07-postgres.md
+2026-05-26T02:43:28,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.46,508,sim,relatorios\01-sintaxe.md
+2026-05-26T02:43:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,24.12,565,sim,relatorios\02-ciclo.md
+2026-05-26T02:44:14,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.2,498,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:45:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,53.07,932,sim,relatorios\04-env-ausente.md
+2026-05-26T02:46:18,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.55,60.75,950,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:46:54,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,30.1,545,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:48:13,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.5,75.1,1304,sim,relatorios\07-postgres.md
+2026-05-26T02:48:31,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.27,409,sim,relatorios\01-sintaxe.md
+2026-05-26T02:48:57,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.58,594,sim,relatorios\02-ciclo.md
+2026-05-26T02:49:22,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,25.27,558,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:50:07,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,40.43,724,sim,relatorios\04-env-ausente.md
+2026-05-26T02:50:40,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,27.62,445,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:51:24,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,39.07,700,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:52:01,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.5,31.99,580,sim,relatorios\07-postgres.md
+2026-05-26T02:52:24,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,22.63,532,sim,relatorios\01-sintaxe.md
+2026-05-26T02:52:48,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,23.88,559,sim,relatorios\02-ciclo.md
+2026-05-26T02:53:03,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,15.41,346,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:53:48,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,39.27,704,sim,relatorios\04-env-ausente.md
+2026-05-26T02:54:35,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,41.82,660,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:55:28,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,48.75,869,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:56:00,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,27.09,495,sim,relatorios\07-postgres.md
+2026-05-26T02:56:13,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,12.94,309,sim,relatorios\01-sintaxe.md
+2026-05-26T02:56:38,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,24.62,575,sim,relatorios\02-ciclo.md
+2026-05-26T02:56:52,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,13.87,309,sim,relatorios\03-nome-invalido.md
+2026-05-26T02:57:24,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,27.32,490,sim,relatorios\04-env-ausente.md
+2026-05-26T02:58:02,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,33.01,528,sim,relatorios\05-porta-conflito.md
+2026-05-26T02:58:31,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,23.09,417,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T02:59:15,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,39.22,709,sim,relatorios\07-postgres.md
+2026-05-26T02:59:33,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.68,443,sim,relatorios\01-sintaxe.md
+2026-05-26T02:59:56,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.41,524,sim,relatorios\02-ciclo.md
+2026-05-26T03:00:24,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.76,614,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:01:14,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,44.98,799,sim,relatorios\04-env-ausente.md
+2026-05-26T03:02:31,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.57,72.26,1119,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:03:10,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,33.26,595,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:03:55,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,41.0,735,sim,relatorios\07-postgres.md
+2026-05-26T03:04:09,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.9,330,sim,relatorios\01-sintaxe.md
+2026-05-26T03:04:42,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,32.76,748,sim,relatorios\02-ciclo.md
+2026-05-26T03:05:00,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,18.14,405,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:05:24,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,18.81,339,sim,relatorios\04-env-ausente.md
+2026-05-26T03:06:07,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,37.77,601,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:06:41,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,28.31,509,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:07:42,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,56.83,1004,sim,relatorios\07-postgres.md
+2026-05-26T03:07:54,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,11.82,282,sim,relatorios\01-sintaxe.md
+2026-05-26T03:08:23,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.74,663,sim,relatorios\02-ciclo.md
+2026-05-26T03:08:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,13.54,305,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:09:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,30.99,552,sim,relatorios\04-env-ausente.md
+2026-05-26T03:09:52,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,33.96,547,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:11:09,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,71.83,1241,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:11:52,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,38.35,687,sim,relatorios\07-postgres.md
+2026-05-26T03:12:10,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.63,438,sim,relatorios\01-sintaxe.md
+2026-05-26T03:12:31,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.8,483,sim,relatorios\02-ciclo.md
+2026-05-26T03:12:54,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,22.3,493,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:13:42,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,42.91,759,sim,relatorios\04-env-ausente.md
+2026-05-26T03:14:15,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,28.53,456,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:14:48,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,27.39,494,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:15:24,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,31.53,570,sim,relatorios\07-postgres.md
+2026-05-26T03:15:45,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.44,474,sim,relatorios\01-sintaxe.md
+2026-05-26T03:16:11,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,26.55,612,sim,relatorios\02-ciclo.md
+2026-05-26T03:16:27,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,15.29,341,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:17:02,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,30.53,547,sim,relatorios\04-env-ausente.md
+2026-05-26T03:17:45,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.55,37.14,589,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:18:15,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.53,25.81,465,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:19:36,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,75.21,1296,sim,relatorios\07-postgres.md
+2026-05-26T03:19:51,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.08,358,sim,relatorios\01-sintaxe.md
+2026-05-26T03:20:16,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,25.69,591,sim,relatorios\02-ciclo.md
+2026-05-26T03:20:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.6,458,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:21:27,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,44.38,787,sim,relatorios\04-env-ausente.md
+2026-05-26T03:22:25,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,53.36,839,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:22:53,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,23.27,418,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:23:37,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,38.78,694,sim,relatorios\07-postgres.md
+2026-05-26T03:23:58,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.25,495,sim,relatorios\01-sintaxe.md
+2026-05-26T03:24:20,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.06,512,sim,relatorios\02-ciclo.md
+2026-05-26T03:24:52,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,31.73,690,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:25:38,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,41.0,726,sim,relatorios\04-env-ausente.md
+2026-05-26T03:26:19,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,35.28,553,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:26:49,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,25.33,456,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:27:27,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,33.12,594,sim,relatorios\07-postgres.md
+2026-05-26T03:27:48,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.03,491,sim,relatorios\01-sintaxe.md
+2026-05-26T03:28:08,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.73,460,sim,relatorios\02-ciclo.md
+2026-05-26T03:28:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,29.23,640,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:29:16,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,33.18,594,sim,relatorios\04-env-ausente.md
+2026-05-26T03:30:13,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,52.45,829,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:30:43,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.59,24.56,441,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:31:36,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,48.72,864,sim,relatorios\07-postgres.md
+2026-05-26T03:31:47,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,10.67,255,sim,relatorios\01-sintaxe.md
+2026-05-26T03:32:18,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,30.34,690,sim,relatorios\02-ciclo.md
+2026-05-26T03:32:38,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,19.85,439,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:33:06,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,23.81,423,sim,relatorios\04-env-ausente.md
+2026-05-26T03:33:48,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.56,36.12,570,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:34:22,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.53,29.55,532,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:35:04,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,37.05,663,sim,relatorios\07-postgres.md
+2026-05-26T03:35:21,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.31,408,sim,relatorios\01-sintaxe.md
+2026-05-26T03:35:43,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,21.15,490,sim,relatorios\02-ciclo.md
+2026-05-26T03:36:03,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,20.25,444,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:36:41,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,32.54,581,sim,relatorios\04-env-ausente.md
+2026-05-26T03:37:17,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,31.2,492,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:38:03,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,41.32,737,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:38:54,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,45.59,818,sim,relatorios\07-postgres.md
+2026-05-26T03:39:13,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.88,446,sim,relatorios\01-sintaxe.md
+2026-05-26T03:39:40,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,27.35,630,sim,relatorios\02-ciclo.md
+2026-05-26T03:40:06,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,25.68,565,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:40:40,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,28.46,505,sim,relatorios\04-env-ausente.md
+2026-05-26T03:41:33,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,48.57,758,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:41:50,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,1.08,11.31,199,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:42:17,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,22.26,401,sim,relatorios\07-postgres.md
+2026-05-26T03:42:37,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.57,457,sim,relatorios\01-sintaxe.md
+2026-05-26T03:42:59,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.4,517,sim,relatorios\02-ciclo.md
+2026-05-26T03:43:27,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.12,594,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:44:04,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,32.72,582,sim,relatorios\04-env-ausente.md
+2026-05-26T03:44:50,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,40.71,643,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:45:25,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,29.8,533,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:45:59,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,29.49,529,sim,relatorios\07-postgres.md
+2026-05-26T03:46:14,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,14.86,348,sim,relatorios\01-sintaxe.md
+2026-05-26T03:46:43,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.7,654,sim,relatorios\02-ciclo.md
+2026-05-26T03:47:03,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.05,443,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:47:25,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,16.4,292,sim,relatorios\04-env-ausente.md
+2026-05-26T03:48:13,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,43.22,678,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:48:55,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,36.5,649,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:49:41,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,41.43,733,sim,relatorios\07-postgres.md
+2026-05-26T03:49:58,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.57,411,sim,relatorios\01-sintaxe.md
+2026-05-26T03:50:21,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.23,512,sim,relatorios\02-ciclo.md
+2026-05-26T03:50:43,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.15,21.66,477,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:51:32,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,43.99,770,sim,relatorios\04-env-ausente.md
+2026-05-26T03:52:32,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,55.1,860,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:53:18,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,41.46,738,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:53:57,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,33.84,611,sim,relatorios\07-postgres.md
+2026-05-26T03:54:15,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.69,416,sim,relatorios\01-sintaxe.md
+2026-05-26T03:54:54,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,38.64,861,sim,relatorios\02-ciclo.md
+2026-05-26T03:55:21,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,27.53,597,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:55:57,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,30.83,539,sim,relatorios\04-env-ausente.md
+2026-05-26T03:56:32,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.56,29.86,471,sim,relatorios\05-porta-conflito.md
+2026-05-26T03:57:14,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,37.24,662,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T03:57:56,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.95,657,sim,relatorios\07-postgres.md
+2026-05-26T03:58:10,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.39,314,sim,relatorios\01-sintaxe.md
+2026-05-26T03:58:35,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,25.66,589,sim,relatorios\02-ciclo.md
+2026-05-26T03:58:54,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,18.81,417,sim,relatorios\03-nome-invalido.md
+2026-05-26T03:59:21,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,21.68,383,sim,relatorios\04-env-ausente.md
+2026-05-26T04:00:04,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,37.85,598,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:00:54,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,44.8,789,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:01:49,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,50.65,896,sim,relatorios\07-postgres.md
+2026-05-26T04:02:06,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.08,398,sim,relatorios\01-sintaxe.md
+2026-05-26T04:02:38,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,31.62,718,sim,relatorios\02-ciclo.md
+2026-05-26T04:03:06,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.29,596,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:03:46,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,35.1,619,sim,relatorios\04-env-ausente.md
+2026-05-26T04:04:29,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,38.12,601,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:04:59,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,25.0,448,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:05:40,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.15,647,sim,relatorios\07-postgres.md
+2026-05-26T04:05:58,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.31,427,sim,relatorios\01-sintaxe.md
+2026-05-26T04:06:19,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.32,469,sim,relatorios\02-ciclo.md
+2026-05-26T04:06:47,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.83,607,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:08:18,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,85.74,1445,sim,relatorios\04-env-ausente.md
+2026-05-26T04:08:54,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.57,31.7,503,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:09:25,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,25.71,464,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:10:16,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,46.03,817,sim,relatorios\07-postgres.md
+2026-05-26T04:10:37,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.76,486,sim,relatorios\01-sintaxe.md
+2026-05-26T04:11:05,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,28.45,648,sim,relatorios\02-ciclo.md
+2026-05-26T04:11:22,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,16.51,366,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:11:52,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,24.39,432,sim,relatorios\04-env-ausente.md
+2026-05-26T04:12:31,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,33.95,531,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:13:06,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,30.72,546,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:13:35,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,23.78,429,sim,relatorios\07-postgres.md
+2026-05-26T04:13:57,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.65,502,sim,relatorios\01-sintaxe.md
+2026-05-26T04:14:26,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.99,661,sim,relatorios\02-ciclo.md
+2026-05-26T04:14:49,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.35,512,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:15:36,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.59,41.65,731,sim,relatorios\04-env-ausente.md
+2026-05-26T04:16:20,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,38.92,611,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:16:55,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,29.54,529,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:17:06,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,6.93,116,sim,relatorios\07-postgres.md
+2026-05-26T04:17:18,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,11.12,264,sim,relatorios\01-sintaxe.md
+2026-05-26T04:18:10,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,52.45,1134,sim,relatorios\02-ciclo.md
+2026-05-26T04:18:23,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,12.81,285,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:18:49,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,21.25,378,sim,relatorios\04-env-ausente.md
+2026-05-26T04:19:37,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,42.89,670,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:20:16,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,34.01,605,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:20:57,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.05,643,sim,relatorios\07-postgres.md
+2026-05-26T04:21:19,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.98,510,sim,relatorios\01-sintaxe.md
+2026-05-26T04:21:49,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,29.1,660,sim,relatorios\02-ciclo.md
+2026-05-26T04:22:22,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,32.87,710,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:22:56,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,29.86,529,sim,relatorios\04-env-ausente.md
+2026-05-26T04:23:49,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,47.42,741,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:24:24,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.5,29.59,523,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:25:12,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,43.33,773,sim,relatorios\07-postgres.md
+2026-05-26T04:25:32,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.17,470,sim,relatorios\01-sintaxe.md
+2026-05-26T04:25:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.1,466,sim,relatorios\02-ciclo.md
+2026-05-26T04:26:16,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.86,521,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:26:46,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,25.09,445,sim,relatorios\04-env-ausente.md
+2026-05-26T04:27:27,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.56,35.09,552,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:28:01,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,28.97,516,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:28:46,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,40.79,724,sim,relatorios\07-postgres.md
+2026-05-26T04:29:09,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,23.2,538,sim,relatorios\01-sintaxe.md
+2026-05-26T04:29:28,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,18.59,432,sim,relatorios\02-ciclo.md
+2026-05-26T04:29:52,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.19,509,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:30:32,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,35.3,625,sim,relatorios\04-env-ausente.md
+2026-05-26T04:31:35,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,58.12,899,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:32:19,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,39.07,691,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:32:49,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,24.54,440,sim,relatorios\07-postgres.md
+2026-05-26T04:33:08,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.12,442,sim,relatorios\01-sintaxe.md
+2026-05-26T04:33:21,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,13.2,309,sim,relatorios\02-ciclo.md
+2026-05-26T04:33:42,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,20.8,459,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:34:12,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,24.73,437,sim,relatorios\04-env-ausente.md
+2026-05-26T04:36:29,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.57,131.87,2179,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:37:11,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.6,37.36,657,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:37:55,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,39.38,699,sim,relatorios\07-postgres.md
+2026-05-26T04:38:15,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.18,449,sim,relatorios\01-sintaxe.md
+2026-05-26T04:38:41,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,26.08,597,sim,relatorios\02-ciclo.md
+2026-05-26T04:39:09,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,27.48,601,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:39:47,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,32.98,584,sim,relatorios\04-env-ausente.md
+2026-05-26T04:40:31,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,39.55,623,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:41:05,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,28.73,514,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:41:54,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,44.22,783,sim,relatorios\07-postgres.md
+2026-05-26T04:42:14,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.88,459,sim,relatorios\01-sintaxe.md
+2026-05-26T04:42:48,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,34.37,775,sim,relatorios\02-ciclo.md
+2026-05-26T04:43:08,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,19.72,435,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:43:50,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,36.24,639,sim,relatorios\04-env-ausente.md
+2026-05-26T04:44:32,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,37.75,593,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:45:17,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,39.23,696,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:45:58,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.8,655,sim,relatorios\07-postgres.md
+2026-05-26T04:46:21,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,23.0,530,sim,relatorios\01-sintaxe.md
+2026-05-26T04:46:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,30.75,693,sim,relatorios\02-ciclo.md
+2026-05-26T04:47:18,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,25.26,552,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:47:59,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,36.66,646,sim,relatorios\04-env-ausente.md
+2026-05-26T04:48:45,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,40.92,642,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:49:31,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,40.54,716,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:50:08,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,32.44,583,sim,relatorios\07-postgres.md
+2026-05-26T04:50:28,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.46,454,sim,relatorios\01-sintaxe.md
+2026-05-26T04:50:56,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.37,645,sim,relatorios\02-ciclo.md
+2026-05-26T04:51:22,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.04,564,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:51:51,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,23.97,422,sim,relatorios\04-env-ausente.md
+2026-05-26T04:52:25,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,28.02,440,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:52:56,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.6,26.36,470,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:53:28,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.56,27.54,496,sim,relatorios\07-postgres.md
+2026-05-26T04:53:53,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,24.95,577,sim,relatorios\01-sintaxe.md
+2026-05-26T04:54:16,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,22.82,526,sim,relatorios\02-ciclo.md
+2026-05-26T04:54:41,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,24.22,529,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:55:30,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,44.6,781,sim,relatorios\04-env-ausente.md
+2026-05-26T04:56:27,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,51.3,802,sim,relatorios\05-porta-conflito.md
+2026-05-26T04:56:57,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,25.23,451,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T04:57:37,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,35.26,630,sim,relatorios\07-postgres.md
+2026-05-26T04:57:53,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.34,360,sim,relatorios\01-sintaxe.md
+2026-05-26T04:58:17,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,24.4,561,sim,relatorios\02-ciclo.md
+2026-05-26T04:58:42,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,24.83,542,sim,relatorios\03-nome-invalido.md
+2026-05-26T04:59:10,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,23.46,416,sim,relatorios\04-env-ausente.md
+2026-05-26T04:59:48,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,32.48,511,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:00:22,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,29.28,523,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:01:15,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,48.07,853,sim,relatorios\07-postgres.md
+2026-05-26T05:01:28,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,12.27,290,sim,relatorios\01-sintaxe.md
+2026-05-26T05:01:58,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,30.45,690,sim,relatorios\02-ciclo.md
+2026-05-26T05:02:25,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,26.66,583,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:03:00,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,30.12,528,sim,relatorios\04-env-ausente.md
+2026-05-26T05:03:32,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,26.98,427,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:04:20,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,43.2,763,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:04:56,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,30.43,549,sim,relatorios\07-postgres.md
+2026-05-26T05:05:15,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,18.74,441,sim,relatorios\01-sintaxe.md
+2026-05-26T05:05:31,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,16.26,382,sim,relatorios\02-ciclo.md
+2026-05-26T05:05:52,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,21.04,466,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:06:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,15.92,281,sim,relatorios\04-env-ausente.md
+2026-05-26T05:06:59,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,41.24,651,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:07:34,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,29.91,535,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:08:10,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,30.73,553,sim,relatorios\07-postgres.md
+2026-05-26T05:08:25,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.4,359,sim,relatorios\01-sintaxe.md
+2026-05-26T05:08:41,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,15.07,352,sim,relatorios\02-ciclo.md
+2026-05-26T05:09:03,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,22.15,487,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:09:43,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,35.19,624,sim,relatorios\04-env-ausente.md
+2026-05-26T05:10:31,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,42.85,674,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:10:58,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,21.82,390,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:11:44,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,41.45,738,sim,relatorios\07-postgres.md
+2026-05-26T05:11:59,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,14.91,351,sim,relatorios\01-sintaxe.md
+2026-05-26T05:12:23,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,24.23,557,sim,relatorios\02-ciclo.md
+2026-05-26T05:12:43,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,19.75,433,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:13:21,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,32.59,579,sim,relatorios\04-env-ausente.md
+2026-05-26T05:14:03,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,36.46,576,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:15:08,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,60.23,1046,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:15:35,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,22.19,402,sim,relatorios\07-postgres.md
+2026-05-26T05:15:51,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.17,383,sim,relatorios\01-sintaxe.md
+2026-05-26T05:16:07,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,15.45,362,sim,relatorios\02-ciclo.md
+2026-05-26T05:16:40,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,33.34,722,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:17:23,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.58,37.89,668,sim,relatorios\04-env-ausente.md
+2026-05-26T05:18:09,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.55,40.86,642,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:18:37,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,22.74,408,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:19:11,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,29.62,532,sim,relatorios\07-postgres.md
+2026-05-26T05:19:42,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,30.9,707,sim,relatorios\01-sintaxe.md
+2026-05-26T05:20:02,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.74,457,sim,relatorios\02-ciclo.md
+2026-05-26T05:20:25,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.68,499,sim,relatorios\03-nome-invalido.md
+2026-05-26T05:21:03,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,32.91,584,sim,relatorios\04-env-ausente.md
+2026-05-26T05:21:42,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,33.9,531,sim,relatorios\05-porta-conflito.md
+2026-05-26T05:22:19,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,32.18,574,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T05:23:11,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,46.62,826,sim,relatorios\07-postgres.md
+2026-05-26T05:23:35,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,24.07,558,sim,relatorios\01-sintaxe.md
+2026-05-26T05:23:54,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.13,443,sim,relatorios\02-ciclo.md
+2026-05-26T05:24:20,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,25.48,556,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:05:09,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,2444.26,40531,sim,relatorios\04-env-ausente.md
+2026-05-26T06:06:08,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.67,54.2,844,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:06:42,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.51,28.38,504,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:07:25,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,38.19,677,sim,relatorios\07-postgres.md
+2026-05-26T06:07:40,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,15.68,367,sim,relatorios\01-sintaxe.md
+2026-05-26T06:08:06,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,25.89,589,sim,relatorios\02-ciclo.md
+2026-05-26T06:08:30,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.67,517,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:09:14,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,38.88,686,sim,relatorios\04-env-ausente.md
+2026-05-26T06:09:49,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,29.42,468,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:10:59,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,65.65,1137,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:11:23,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,18.93,341,sim,relatorios\07-postgres.md
+2026-05-26T06:11:45,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.82,509,sim,relatorios\01-sintaxe.md
+2026-05-26T06:12:06,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,21.21,490,sim,relatorios\02-ciclo.md
+2026-05-26T06:12:24,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,17.82,395,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:13:03,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,33.19,589,sim,relatorios\04-env-ausente.md
+2026-05-26T06:13:42,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,33.87,533,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:14:15,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,28.57,510,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:14:58,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,37.49,668,sim,relatorios\07-postgres.md
+2026-05-26T06:15:08,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,10.7,253,sim,relatorios\01-sintaxe.md
+2026-05-26T06:15:28,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.77,458,sim,relatorios\02-ciclo.md
+2026-05-26T06:15:46,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,17.3,382,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:16:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,22.19,394,sim,relatorios\04-env-ausente.md
+2026-05-26T06:17:20,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,62.48,966,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:17:55,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,29.55,527,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:18:29,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,29.39,526,sim,relatorios\07-postgres.md
+2026-05-26T06:18:46,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.88,397,sim,relatorios\01-sintaxe.md
+2026-05-26T06:19:12,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,26.02,597,sim,relatorios\02-ciclo.md
+2026-05-26T06:19:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,24.7,542,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:20:29,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,47.0,820,sim,relatorios\04-env-ausente.md
+2026-05-26T06:21:50,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,75.49,1192,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:22:33,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,38.4,679,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:23:17,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,39.15,698,sim,relatorios\07-postgres.md
+2026-05-26T06:23:28,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,10.44,245,sim,relatorios\01-sintaxe.md
+2026-05-26T06:23:47,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,19.01,441,sim,relatorios\02-ciclo.md
+2026-05-26T06:24:13,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,25.87,566,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:24:50,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,32.36,568,sim,relatorios\04-env-ausente.md
+2026-05-26T06:25:38,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.56,42.39,668,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:26:03,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.52,20.33,364,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:27:08,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,60.09,1044,sim,relatorios\07-postgres.md
+2026-05-26T06:27:29,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.93,484,sim,relatorios\01-sintaxe.md
+2026-05-26T06:27:50,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,21.21,490,sim,relatorios\02-ciclo.md
+2026-05-26T06:28:12,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,21.85,478,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:28:58,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,40.67,711,sim,relatorios\04-env-ausente.md
+2026-05-26T06:29:27,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.56,23.46,367,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:30:06,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,34.37,607,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:30:38,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.55,26.81,484,sim,relatorios\07-postgres.md
+2026-05-26T06:30:51,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,13.09,308,sim,relatorios\01-sintaxe.md
+2026-05-26T06:31:14,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,23.45,538,sim,relatorios\02-ciclo.md
+2026-05-26T06:31:40,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,25.86,566,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:32:19,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,33.96,598,sim,relatorios\04-env-ausente.md
+2026-05-26T06:32:59,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,34.34,539,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:33:35,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,31.19,556,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:34:16,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,36.42,651,sim,relatorios\07-postgres.md
+2026-05-26T06:34:33,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.22,379,sim,relatorios\01-sintaxe.md
+2026-05-26T06:35:01,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,27.75,631,sim,relatorios\02-ciclo.md
+2026-05-26T06:35:18,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,17.46,388,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:36:00,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,37.05,652,sim,relatorios\04-env-ausente.md
+2026-05-26T06:36:36,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,30.61,485,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:37:10,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.57,28.55,509,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:37:39,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,24.95,448,sim,relatorios\07-postgres.md
+2026-05-26T06:37:56,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.49,389,sim,relatorios\01-sintaxe.md
+2026-05-26T06:38:12,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,15.56,364,sim,relatorios\02-ciclo.md
+2026-05-26T06:38:37,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.15,25.34,552,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:39:05,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.54,23.37,416,sim,relatorios\04-env-ausente.md
+2026-05-26T06:39:42,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.51,31.51,498,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:40:34,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,47.17,830,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:41:16,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,37.07,662,sim,relatorios\07-postgres.md
+2026-05-26T06:41:36,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.7,456,sim,relatorios\01-sintaxe.md
+2026-05-26T06:42:02,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,26.1,595,sim,relatorios\02-ciclo.md
+2026-05-26T06:42:25,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.67,499,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:42:47,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,16.78,297,sim,relatorios\04-env-ausente.md
+2026-05-26T06:43:43,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.53,51.17,799,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:44:17,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,28.74,512,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:44:47,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,25.18,450,sim,relatorios\07-postgres.md
+2026-05-26T06:45:06,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.35,452,sim,relatorios\01-sintaxe.md
+2026-05-26T06:45:27,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,20.99,484,sim,relatorios\02-ciclo.md
+2026-05-26T06:45:50,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.16,486,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:46:18,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.56,23.73,422,sim,relatorios\04-env-ausente.md
+2026-05-26T06:47:17,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,53.64,836,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:47:52,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,30.06,536,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:48:38,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.58,40.39,719,sim,relatorios\07-postgres.md
+2026-05-26T06:49:04,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.05,26.16,606,sim,relatorios\01-sintaxe.md
+2026-05-26T06:49:35,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,31.61,720,sim,relatorios\02-ciclo.md
+2026-05-26T06:49:47,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,11.86,265,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:50:20,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.6,27.23,485,sim,relatorios\04-env-ausente.md
+2026-05-26T06:51:05,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,40.22,633,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:51:40,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,29.79,533,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:52:24,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,38.97,692,sim,relatorios\07-postgres.md
+2026-05-26T06:52:46,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,22.1,511,sim,relatorios\01-sintaxe.md
+2026-05-26T06:53:19,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,33.22,753,sim,relatorios\02-ciclo.md
+2026-05-26T06:53:38,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,18.15,402,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:54:23,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,40.02,701,sim,relatorios\04-env-ausente.md
+2026-05-26T06:55:02,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,34.14,541,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:55:32,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,25.22,447,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T06:56:00,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,23.12,412,sim,relatorios\07-postgres.md
+2026-05-26T06:56:17,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,16.67,387,sim,relatorios\01-sintaxe.md
+2026-05-26T06:56:39,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,22.24,513,sim,relatorios\02-ciclo.md
+2026-05-26T06:56:57,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,17.27,381,sim,relatorios\03-nome-invalido.md
+2026-05-26T06:57:33,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,31.79,566,sim,relatorios\04-env-ausente.md
+2026-05-26T06:58:43,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,64.53,999,sim,relatorios\05-porta-conflito.md
+2026-05-26T06:59:22,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,33.92,602,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:00:14,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,46.9,828,sim,relatorios\07-postgres.md
+2026-05-26T07:00:33,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.45,455,sim,relatorios\01-sintaxe.md
+2026-05-26T07:01:00,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.1,26.73,611,sim,relatorios\02-ciclo.md
+2026-05-26T07:01:23,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,22.9,501,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:01:53,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.61,24.83,441,sim,relatorios\04-env-ausente.md
+2026-05-26T07:03:02,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,63.64,978,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:03:33,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,25.98,464,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:04:15,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.53,37.5,669,sim,relatorios\07-postgres.md
+2026-05-26T07:04:36,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.04,492,sim,relatorios\01-sintaxe.md
+2026-05-26T07:05:01,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,24.22,557,sim,relatorios\02-ciclo.md
+2026-05-26T07:05:26,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,24.72,540,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:06:13,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.6,42.57,749,sim,relatorios\04-env-ausente.md
+2026-05-26T07:07:11,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,52.9,825,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:07:41,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,25.15,446,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:08:18,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.54,32.23,575,sim,relatorios\07-postgres.md
+2026-05-26T07:08:36,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.15,403,sim,relatorios\01-sintaxe.md
+2026-05-26T07:09:06,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,30.56,697,sim,relatorios\02-ciclo.md
+2026-05-26T07:09:45,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,38.37,825,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:10:18,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.55,27.75,491,sim,relatorios\04-env-ausente.md
+2026-05-26T07:11:00,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.66,36.58,574,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:11:36,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.65,31.03,555,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:12:04,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,23.06,413,sim,relatorios\07-postgres.md
+2026-05-26T07:12:26,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,21.89,509,sim,relatorios\01-sintaxe.md
+2026-05-26T07:12:52,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.08,26.1,597,sim,relatorios\02-ciclo.md
+2026-05-26T07:13:15,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,23.39,515,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:13:46,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.59,26.13,465,sim,relatorios\04-env-ausente.md
+2026-05-26T07:14:27,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,35.25,553,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:15:11,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.55,38.88,688,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:15:41,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.51,25.11,449,sim,relatorios\07-postgres.md
+2026-05-26T07:16:00,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,19.17,447,sim,relatorios\01-sintaxe.md
+2026-05-26T07:16:30,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,30.43,688,sim,relatorios\02-ciclo.md
+2026-05-26T07:16:54,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,23.38,515,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:17:36,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.61,36.64,650,sim,relatorios\04-env-ausente.md
+2026-05-26T07:18:40,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.52,59.18,920,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:19:05,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,19.84,349,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:19:55,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,45.66,814,sim,relatorios\07-postgres.md
+2026-05-26T07:20:13,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,17.47,411,sim,relatorios\01-sintaxe.md
+2026-05-26T07:20:37,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,23.8,548,sim,relatorios\02-ciclo.md
+2026-05-26T07:21:02,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.14,25.11,549,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:21:47,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.57,39.33,696,sim,relatorios\04-env-ausente.md
+2026-05-26T07:22:35,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.54,42.95,672,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:23:12,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.54,32.43,575,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:23:59,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.52,41.78,742,sim,relatorios\07-postgres.md
+2026-05-26T07:24:20,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,20.86,484,sim,relatorios\01-sintaxe.md
+2026-05-26T07:24:49,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,29.73,677,sim,relatorios\02-ciclo.md
+2026-05-26T07:25:18,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,28.34,617,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:26:14,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,0.92,51.06,886,sim,relatorios\04-env-ausente.md
+2026-05-26T07:26:59,05-porta-conflito,Conflito de porta entre containers,codellama:7b,600,apply,failure-captured:apply,0.62,39.46,616,sim,relatorios\05-porta-conflito.md
+2026-05-26T07:27:40,06-dependencia-quebrada,Dependência Python inexistente no build,codellama:7b,600,apply,failure-captured:apply,0.56,35.47,629,sim,relatorios\06-dependencia-quebrada.md
+2026-05-26T07:28:21,07-postgres,PostgreSQL sem senha obrigatória,codellama:7b,600,apply,failure-captured:apply,0.7,36.55,653,sim,relatorios\07-postgres.md
+2026-05-26T07:28:33,01-sintaxe,Erro de sintaxe em HCL,codellama:7b,600,init,failure-captured:init,0.04,11.37,267,sim,relatorios\01-sintaxe.md
+2026-05-26T07:29:01,02-ciclo,Dependencia ciclica entre recursos,codellama:7b,600,validate,failure-captured:validate,0.09,28.31,644,sim,relatorios\02-ciclo.md
+2026-05-26T07:29:24,03-nome-invalido,Nome fora do padrao esperado,codellama:7b,600,plan,failure-captured:plan,0.13,22.93,502,sim,relatorios\03-nome-invalido.md
+2026-05-26T07:30:15,04-env-ausente,Container com variável de ambiente ausente,codellama:7b,600,apply,failure-captured:apply,1.99,44.22,767,sim,relatorios\04-env-ausente.md

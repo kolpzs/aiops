@@ -943,11 +943,12 @@ def render_results_tab():
     try:
         import plotly.graph_objects as go
         import plotly.express as px
+        from statistics import mean, median, mode, stdev
         HAS_PLOTLY = True
     except ImportError:
         HAS_PLOTLY = False
 
-    st.subheader("📊 Resultados e Gráficos")
+    st.subheader("📊 Resultados e Análise Estatística")
 
     data = load_csv_results()
     if not data:
@@ -958,233 +959,355 @@ def render_results_tab():
     all_rows = data
 
     # --- Metrics row ---
-    st.markdown("### 📈 Métricas gerais")
-    m1, m2, m3, m4, m5 = st.columns(5)
+    st.markdown("### 📈 Métricas Gerais")
+    m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
         st.metric("Total execuções", len(all_rows))
     with m2:
         st.metric("Com IA", len(ai_rows))
     with m3:
-        pct = f"{100 * len(ai_rows) / len(all_rows):.0f}%" if all_rows else "0%"
-        st.metric("Taxa com IA", pct)
+        models_used = set(r["modelo"] for r in ai_rows)
+        st.metric("Modelos", len(models_used))
     with m4:
-        if ai_rows:
-            avg_ai = sum(float(r["tempo_ia_s"]) for r in ai_rows) / len(ai_rows)
-            st.metric("Tempo médio IA (s)", f"{avg_ai:.1f}")
-        else:
-            st.metric("Tempo médio IA (s)", "N/A")
+        scenarios_used = set(r["cenario"] for r in ai_rows)
+        st.metric("Cenários", len(scenarios_used))
     with m5:
         if ai_rows:
-            avg_tokens = sum(int(r["tokens_estimados"]) for r in ai_rows) / len(ai_rows)
-            st.metric("Tokens médio", f"{avg_tokens:.0f}")
+            avg_ai = mean([float(r["tempo_ia_s"]) for r in ai_rows])
+            st.metric("Média IA (s)", f"{avg_ai:.1f}")
         else:
-            st.metric("Tokens médio", "N/A")
+            st.metric("Média IA (s)", "N/A")
+    with m6:
+        if ai_rows:
+            avg_tok = mean([int(r["tokens_estimados"]) for r in ai_rows])
+            st.metric("Média tokens", f"{avg_tok:.0f}")
+        else:
+            st.metric("Média tokens", "N/A")
 
+    if not ai_rows or not HAS_PLOTLY:
+        st.warning("Sem dados com IA ou Plotly não disponível.")
+        return
+
+    # Prepare data lists
+    ai_times = [float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0]
+    tokens_list = [int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0]
+    toks_per_sec = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+                    for r in ai_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
+
+    # ── Estatísticas Descritivas (tabela resumo) ─────────────────────────────
     st.markdown("---")
+    st.markdown("### 📐 Estatísticas Descritivas")
 
-    # ── CHART 1: Proporção IA vs Sem IA (pizza) ─────────────────────────────
-    st.markdown("### 🥧 1. Proporção de execuções com / sem IA")
-    with_ia = len(ai_rows)
-    without_ia = len(all_rows) - with_ia
-    if HAS_PLOTLY:
-        fig_pie = go.Figure(data=[go.Pie(
-            labels=["Com IA ✅", "Sem IA ⚪"],
-            values=[with_ia, without_ia],
-            hole=0.45,
-            marker_colors=["#4CAF50", "#9E9E9E"],
-            textinfo="label+percent",
-        )])
-        fig_pie.update_layout(
-            margin=dict(t=20, b=20, l=20, r=20),
-            height=300,
-            showlegend=True,
-            legend=dict(orientation="h", x=0.3, y=-0.1),
-        )
-        st.plotly_chart(fig_pie, width="stretch")
-    else:
-        st.bar_chart({"Com IA": with_ia, "Sem IA": without_ia})
-
-    st.markdown("---")
-
-    # ── CHART 2: Falhas por etapa do pipeline ───────────────────────────────
-    st.markdown("### 🔴 2. Distribuição de falhas por etapa do pipeline")
-    etapas: dict[str, int] = {}
-    for r in all_rows:
-        raw = r.get("etapa_falha", "desconhecido") or "desconhecido"
-        # normalise "failure-captured:init" → "init"
-        etapa = raw.split(":")[-1] if ":" in raw else raw
-        etapas[etapa] = etapas.get(etapa, 0) + 1
-
-    if HAS_PLOTLY:
-        sorted_etapas = sorted(etapas.items(), key=lambda x: x[1], reverse=True)
-        color_map = {
-            "init": "#E53935", "validate": "#FB8C00", "plan": "#FDD835",
-            "apply": "#8E24AA", "docker": "#1E88E5", "desconhecido": "#757575",
+    def calc_stats(values, label):
+        if not values:
+            return {}
+        try:
+            m = mode(values)
+        except Exception:
+            m = "N/A"
+        return {
+            "Métrica": label,
+            "N": len(values),
+            "Média": f"{mean(values):.2f}",
+            "Mediana": f"{median(values):.2f}",
+            "Moda": f"{m:.2f}" if isinstance(m, (int, float)) else str(m),
+            "Desvio Padrão": f"{stdev(values):.2f}" if len(values) > 1 else "N/A",
+            "Mín": f"{min(values):.2f}",
+            "Máx": f"{max(values):.2f}",
         }
-        fig_etapas = go.Figure(go.Bar(
-            x=[e[0] for e in sorted_etapas],
-            y=[e[1] for e in sorted_etapas],
-            marker_color=[color_map.get(e[0], "#607D8B") for e in sorted_etapas],
-            text=[e[1] for e in sorted_etapas],
+
+    stats_table = [
+        calc_stats(ai_times, "Tempo IA (s)"),
+        calc_stats(tokens_list, "Tokens gerados"),
+        calc_stats(toks_per_sec, "Tokens/segundo"),
+        calc_stats([float(r["tempo_terraform_s"]) for r in ai_rows], "Tempo Terraform (s)"),
+    ]
+    st.dataframe(stats_table, width="stretch", hide_index=True)
+
+    st.markdown("---")
+
+    # ── CHART 1: Box Plot — Tempo IA por Modelo ──────────────────────────────
+    st.markdown("### 📦 1. Box Plot — Tempo de Resposta da IA por Modelo")
+    st.caption("Mostra mediana, quartis e outliers para cada modelo.")
+
+    fig_box = go.Figure()
+    models_sorted = sorted(set(r["modelo"] for r in ai_rows))
+    colors = ["#1E88E5", "#43A047", "#E53935", "#FB8C00", "#8E24AA"]
+    for idx, m in enumerate(models_sorted):
+        times = [float(r["tempo_ia_s"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        fig_box.add_trace(go.Box(
+            y=times, name=m,
+            marker_color=colors[idx % len(colors)],
+            boxmean="sd",  # show mean + standard deviation
+        ))
+    fig_box.update_layout(
+        yaxis_title="Tempo de resposta (s)",
+        height=400,
+        margin=dict(t=30, b=40),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_box, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 2: Violin Plot — Tokens por Modelo ────────────────────────────
+    st.markdown("### 🎻 2. Violin Plot — Distribuição de Tokens por Modelo")
+    st.caption("Densidade de probabilidade + box plot interno. Revela bimodalidades.")
+
+    fig_violin = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        toks = [int(r["tokens_estimados"]) for r in ai_rows if r["modelo"] == m and int(r["tokens_estimados"]) > 0]
+        fig_violin.add_trace(go.Violin(
+            y=toks, name=m,
+            box_visible=True,
+            meanline_visible=True,
+            fillcolor=colors[idx % len(colors)],
+            opacity=0.7,
+            line_color="black",
+        ))
+    fig_violin.update_layout(
+        yaxis_title="Tokens estimados",
+        height=400,
+        margin=dict(t=30, b=40),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_violin, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 3: Histograma — Distribuição tok/s com Média/Mediana ───────────
+    st.markdown("### 📊 3. Histograma — Eficiência (tokens/s) com Média e Mediana")
+    st.caption("Linhas verticais: média (azul), mediana (verde), moda (vermelho).")
+
+    fig_hist = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        tps = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+               for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
+        fig_hist.add_trace(go.Histogram(
+            x=tps, name=m,
+            opacity=0.65,
+            nbinsx=25,
+            marker_color=colors[idx % len(colors)],
+        ))
+    # Add vertical lines for overall stats
+    overall_mean = mean(toks_per_sec)
+    overall_median = median(toks_per_sec)
+    fig_hist.add_vline(x=overall_mean, line_dash="dash", line_color="#1E88E5",
+                       annotation_text=f"Média: {overall_mean:.1f}")
+    fig_hist.add_vline(x=overall_median, line_dash="dot", line_color="#43A047",
+                       annotation_text=f"Mediana: {overall_median:.1f}")
+    fig_hist.update_layout(
+        xaxis_title="Tokens por segundo",
+        yaxis_title="Frequência",
+        barmode="overlay",
+        height=380,
+        margin=dict(t=30, b=40),
+        legend=dict(orientation="h", y=-0.15),
+    )
+    st.plotly_chart(fig_hist, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 4: Heatmap — Tempo IA médio (Modelo × Cenário) ─────────────────
+    st.markdown("### 🗺️ 4. Heatmap — Tempo médio da IA (Modelo × Cenário)")
+    st.caption("Quão rápido cada modelo resolve cada tipo de falha. Mais escuro = mais lento.")
+
+    cenarios_sorted = sorted(set(r["cenario"] for r in ai_rows))
+    z_matrix = []
+    for m in models_sorted:
+        row = []
+        for c in cenarios_sorted:
+            vals = [float(r["tempo_ia_s"]) for r in ai_rows
+                    if r["modelo"] == m and r["cenario"] == c and float(r["tempo_ia_s"]) > 0]
+            row.append(mean(vals) if vals else 0)
+        z_matrix.append(row)
+
+    fig_heat = go.Figure(go.Heatmap(
+        z=z_matrix,
+        x=cenarios_sorted,
+        y=models_sorted,
+        colorscale="YlOrRd",
+        text=[[f"{v:.1f}s" for v in row] for row in z_matrix],
+        texttemplate="%{text}",
+        textfont={"size": 11},
+        colorbar_title="Tempo (s)",
+    ))
+    fig_heat.update_layout(
+        height=300,
+        margin=dict(t=30, b=60),
+        xaxis_title="Cenário",
+        yaxis_title="Modelo",
+    )
+    st.plotly_chart(fig_heat, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 5: Heatmap — Tokens médios (Modelo × Cenário) ──────────────────
+    st.markdown("### 🗺️ 5. Heatmap — Tokens gerados (Modelo × Cenário)")
+    st.caption("Mais escuro = respostas mais longas. Respostas maiores podem indicar mais detalhamento.")
+
+    z_tok_matrix = []
+    for m in models_sorted:
+        row = []
+        for c in cenarios_sorted:
+            vals = [int(r["tokens_estimados"]) for r in ai_rows
+                    if r["modelo"] == m and r["cenario"] == c and int(r["tokens_estimados"]) > 0]
+            row.append(mean(vals) if vals else 0)
+        z_tok_matrix.append(row)
+
+    fig_heat2 = go.Figure(go.Heatmap(
+        z=z_tok_matrix,
+        x=cenarios_sorted,
+        y=models_sorted,
+        colorscale="Blues",
+        text=[[f"{v:.0f}" for v in row] for row in z_tok_matrix],
+        texttemplate="%{text}",
+        textfont={"size": 11},
+        colorbar_title="Tokens",
+    ))
+    fig_heat2.update_layout(
+        height=300,
+        margin=dict(t=30, b=60),
+        xaxis_title="Cenário",
+        yaxis_title="Modelo",
+    )
+    st.plotly_chart(fig_heat2, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 6: Grouped Bar — Comparativo tok/s por modelo e cenário ────────
+    st.markdown("### ⚡ 6. Eficiência por Modelo × Cenário (tok/s)")
+    st.caption("Mais alto = modelo respondeu mais rápido nesse cenário.")
+
+    fig_grouped = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        tps_by_cenario = []
+        for c in cenarios_sorted:
+            vals = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+                    for r in ai_rows
+                    if r["modelo"] == m and r["cenario"] == c
+                    and float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
+            tps_by_cenario.append(mean(vals) if vals else 0)
+        fig_grouped.add_trace(go.Bar(
+            name=m,
+            x=cenarios_sorted,
+            y=tps_by_cenario,
+            marker_color=colors[idx % len(colors)],
+            text=[f"{v:.1f}" for v in tps_by_cenario],
             textposition="outside",
         ))
-        fig_etapas.update_layout(
-            xaxis_title="Etapa",
-            yaxis_title="Nº de ocorrências",
-            height=320,
-            margin=dict(t=20, b=40),
-        )
-        st.plotly_chart(fig_etapas, width="stretch")
-    else:
-        st.bar_chart(etapas)
+    fig_grouped.update_layout(
+        barmode="group",
+        xaxis_title="Cenário",
+        yaxis_title="Tokens/segundo (média)",
+        height=380,
+        margin=dict(t=30, b=60),
+        legend=dict(orientation="h", y=-0.2),
+    )
+    st.plotly_chart(fig_grouped, width="stretch")
 
     st.markdown("---")
 
-    # ── CHART 3: Terraform vs IA por cenário (grouped) ──────────────────────
-    st.markdown("### ⚡ 3. Tempo Terraform vs IA por cenário (comparativo)")
-    if ai_rows:
-        cenarios_seen: list[str] = []
-        tf_times: list[float] = []
-        ia_times: list[float] = []
+    # ── CHART 7: Box Plot — Tempo Terraform por Cenário ──────────────────────
+    st.markdown("### 🔧 7. Box Plot — Tempo Terraform por Cenário")
+    st.caption("Variabilidade do pipeline de IaC. Cenários Docker tendem a ser mais lentos.")
 
-        grouped: dict[str, list] = {}
-        for r in ai_rows:
-            c = r["cenario"]
-            if c not in grouped:
-                grouped[c] = []
-            grouped[c].append(r)
-
-        for c, rows in grouped.items():
-            cenarios_seen.append(c)
-            tf_times.append(sum(float(r["tempo_terraform_s"]) for r in rows) / len(rows))
-            ia_times.append(sum(float(r["tempo_ia_s"]) for r in rows) / len(rows))
-
-        if HAS_PLOTLY:
-            fig_grp = go.Figure(data=[
-                go.Bar(name="Terraform (s)", x=cenarios_seen, y=tf_times, marker_color="#1E88E5"),
-                go.Bar(name="IA (s)", x=cenarios_seen, y=ia_times, marker_color="#43A047"),
-            ])
-            fig_grp.update_layout(
-                barmode="group",
-                xaxis_title="Cenário",
-                yaxis_title="Tempo médio (s)",
-                height=340,
-                margin=dict(t=20, b=60),
-                legend=dict(orientation="h", y=-0.2),
-            )
-            st.plotly_chart(fig_grp, width="stretch")
-        else:
-            st.bar_chart({"Terraform (s)": tf_times, "IA (s)": ia_times})
-    else:
-        st.info("Execute cenários com IA para ver este gráfico.")
+    fig_tf_box = go.Figure()
+    for idx, c in enumerate(cenarios_sorted):
+        vals = [float(r["tempo_terraform_s"]) for r in ai_rows if r["cenario"] == c]
+        fig_tf_box.add_trace(go.Box(
+            y=vals, name=c,
+            marker_color=colors[idx % len(colors)],
+            boxmean=True,
+        ))
+    fig_tf_box.update_layout(
+        yaxis_title="Tempo Terraform (s)",
+        height=380,
+        margin=dict(t=30, b=40),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_tf_box, width="stretch")
 
     st.markdown("---")
 
-    # ── CHART 4: Tokens estimados por modelo ────────────────────────────────
-    st.markdown("### 🔗 4. Tokens médios por modelo")
-    if ai_rows:
-        modelo_tokens: dict[str, list[int]] = {}
-        for r in ai_rows:
-            m = r.get("modelo", "desconhecido") or "desconhecido"
-            modelo_tokens.setdefault(m, []).append(int(r["tokens_estimados"]))
+    # ── CHART 8: Scatter — Tempo IA vs Tokens (correlação) ───────────────────
+    st.markdown("### 🔬 8. Correlação — Tempo de IA vs Tokens Gerados")
+    st.caption("Esperado: relação linear (mais tokens = mais tempo). Desvios indicam variação na velocidade.")
 
-        avg_by_model = {m: sum(v) / len(v) for m, v in modelo_tokens.items()}
-
-        if HAS_PLOTLY:
-            fig_tok = go.Figure(go.Bar(
-                x=list(avg_by_model.keys()),
-                y=list(avg_by_model.values()),
-                marker_color="#7B1FA2",
-                text=[f"{v:.0f}" for v in avg_by_model.values()],
-                textposition="outside",
-            ))
-            fig_tok.update_layout(
-                xaxis_title="Modelo",
-                yaxis_title="Tokens médios",
-                height=300,
-                margin=dict(t=20, b=40),
-            )
-            st.plotly_chart(fig_tok, width="stretch")
-        else:
-            st.bar_chart(avg_by_model)
-    else:
-        st.info("Execute cenários com IA para ver este gráfico.")
+    fig_scatter = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        xs = [float(r["tempo_ia_s"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        ys = [int(r["tokens_estimados"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        fig_scatter.add_trace(go.Scatter(
+            x=xs, y=ys,
+            mode="markers",
+            name=m,
+            marker=dict(size=6, color=colors[idx % len(colors)], opacity=0.6),
+        ))
+    fig_scatter.update_layout(
+        xaxis_title="Tempo IA (s)",
+        yaxis_title="Tokens gerados",
+        height=400,
+        margin=dict(t=30, b=40),
+        legend=dict(orientation="h", y=-0.15),
+    )
+    st.plotly_chart(fig_scatter, width="stretch")
 
     st.markdown("---")
 
-    # ── CHART 5: Eficiência (tokens/s) por cenário ──────────────────────────
-    st.markdown("### 🚀 5. Eficiência da IA: tokens gerados por segundo")
-    st.caption("Quanto maior, mais rápido o modelo produziu resposta. Métrica: tokens_estimados / tempo_ia_s")
-    if ai_rows:
-        efic: dict[str, list[float]] = {}
-        for r in ai_rows:
-            c = r["cenario"]
-            t_ia = float(r["tempo_ia_s"])
-            tok = int(r["tokens_estimados"])
-            if t_ia > 0:
-                efic.setdefault(c, []).append(tok / t_ia)
+    # ── CHART 9: Radar — Comparativo geral entre modelos ─────────────────────
+    st.markdown("### 🕸️ 9. Radar — Perfil Comparativo dos Modelos")
+    st.caption("Normalizado 0-1. Maior área = melhor desempenho geral.")
 
-        if efic:
-            avg_efic = {c: sum(v) / len(v) for c, v in efic.items()}
-            sorted_efic = sorted(avg_efic.items(), key=lambda x: x[1], reverse=True)
+    # Compute metrics per model (normalized)
+    model_metrics = {}
+    for m in models_sorted:
+        m_rows = [r for r in ai_rows if r["modelo"] == m]
+        if not m_rows:
+            continue
+        m_ai_times = [float(r["tempo_ia_s"]) for r in m_rows if float(r["tempo_ia_s"]) > 0]
+        m_tokens = [int(r["tokens_estimados"]) for r in m_rows if int(r["tokens_estimados"]) > 0]
+        m_tps = [t / s for t, s in zip(m_tokens, m_ai_times) if s > 0] if m_ai_times else [0]
+        model_metrics[m] = {
+            "Velocidade (tok/s)": mean(m_tps) if m_tps else 0,
+            "Tokens gerados": mean(m_tokens) if m_tokens else 0,
+            "Tempo resposta (inverso)": 1.0 / mean(m_ai_times) if m_ai_times and mean(m_ai_times) > 0 else 0,
+            "Consistência (1/σ)": 1.0 / stdev(m_ai_times) if len(m_ai_times) > 1 and stdev(m_ai_times) > 0 else 0,
+            "Cenários cobertos": len(set(r["cenario"] for r in m_rows)),
+        }
 
-            if HAS_PLOTLY:
-                fig_eff = go.Figure(go.Bar(
-                    y=[e[0] for e in sorted_efic],
-                    x=[e[1] for e in sorted_efic],
-                    orientation="h",
-                    marker_color="#00ACC1",
-                    text=[f"{e[1]:.1f} tok/s" for e in sorted_efic],
-                    textposition="outside",
-                ))
-                fig_eff.update_layout(
-                    xaxis_title="Tokens por segundo",
-                    height=300,
-                    margin=dict(t=20, b=40, r=100),
-                )
-                st.plotly_chart(fig_eff, width="stretch")
-            else:
-                st.bar_chart(avg_efic)
-        else:
-            st.info("Dados insuficientes para calcular eficiência.")
-    else:
-        st.info("Execute cenários com IA para ver este gráfico.")
+    # Normalize each metric to 0-1 (max across models = 1)
+    categories = list(list(model_metrics.values())[0].keys()) if model_metrics else []
+    max_vals = {}
+    for cat in categories:
+        max_vals[cat] = max(model_metrics[m][cat] for m in model_metrics) or 1
 
-    st.markdown("---")
-
-    # ── CHART 6: Timeline de execuções (linha dupla) ─────────────────────────
-    if len(all_rows) > 1:
-        st.markdown("### 📅 6. Evolução temporal (Terraform vs IA)")
-        labels = [f"{r['cenario']} {r['timestamp'][11:16]}" for r in all_rows]
-        tf_vals = [float(r["tempo_terraform_s"]) for r in all_rows]
-        ia_vals = [float(r["tempo_ia_s"]) for r in all_rows]
-
-        if HAS_PLOTLY:
-            fig_line = go.Figure()
-            fig_line.add_trace(go.Scatter(
-                x=labels, y=tf_vals, mode="lines+markers",
-                name="Terraform (s)", line=dict(color="#1E88E5", width=2),
-            ))
-            fig_line.add_trace(go.Scatter(
-                x=labels, y=ia_vals, mode="lines+markers",
-                name="IA (s)", line=dict(color="#43A047", width=2),
-            ))
-            fig_line.update_layout(
-                xaxis_title="Execução",
-                yaxis_title="Tempo (s)",
-                height=340,
-                margin=dict(t=20, b=80),
-                legend=dict(orientation="h", y=-0.3),
-                xaxis=dict(tickangle=-30),
-            )
-            st.plotly_chart(fig_line, width="stretch")
-        else:
-            st.line_chart({"Terraform (s)": tf_vals, "IA (s)": ia_vals})
+    fig_radar = go.Figure()
+    for idx, m in enumerate(models_sorted):
+        if m not in model_metrics:
+            continue
+        values = [model_metrics[m][cat] / max_vals[cat] for cat in categories]
+        values.append(values[0])  # close the polygon
+        fig_radar.add_trace(go.Scatterpolar(
+            r=values,
+            theta=categories + [categories[0]],
+            name=m,
+            fill="toself",
+            opacity=0.5,
+            line_color=colors[idx % len(colors)],
+        ))
+    fig_radar.update_layout(
+        polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
+        height=450,
+        margin=dict(t=40, b=40),
+        legend=dict(orientation="h", y=-0.1),
+    )
+    st.plotly_chart(fig_radar, width="stretch")
 
     st.markdown("---")
 
     # --- Tabela histórico + download CSV ---
-    st.markdown("### 📋 Histórico completo de execuções")
+    st.markdown("### 📋 Histórico completo")
     st.dataframe(data, width="stretch", hide_index=True)
 
     csv_content = CSV_FILE.read_text(encoding="utf-8")
@@ -1196,24 +1319,6 @@ def render_results_tab():
         width="stretch",
     ):
         add_activity("⬇️", "CSV de resultados baixado")
-
-    # --- Comparativo detalhado ---
-    if ai_rows:
-        st.markdown("### 🔍 Comparativo detalhado (execuções com IA)")
-        compare = []
-        for r in ai_rows:
-            compare.append({
-                "Data": r["timestamp"][:19],
-                "Cenário": r["cenario"],
-                "Modelo": r["modelo"],
-                "Timeout (s)": r["timeout_config"],
-                "Terraform (s)": r["tempo_terraform_s"],
-                "IA (s)": r["tempo_ia_s"],
-                "Tokens": r["tokens_estimados"],
-                "tok/s": f"{int(r['tokens_estimados']) / float(r['tempo_ia_s']):.1f}"
-                         if float(r["tempo_ia_s"]) > 0 else "N/A",
-            })
-        st.dataframe(compare, width="stretch", hide_index=True)
 
 
 # ---------------------------------------------------------------------------
