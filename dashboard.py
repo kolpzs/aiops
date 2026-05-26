@@ -22,6 +22,7 @@ import textwrap
 import time
 import urllib.error
 import urllib.request
+import datetime as _dt_module
 from datetime import datetime
 from pathlib import Path
 
@@ -1402,6 +1403,20 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
             format_func=lambda m: model_display[m],
             key="auto_models",
         )
+
+        # ── Critério de parada ──────────────────────────────────────────────
+        stop_criteria = st.radio(
+            "Critério de parada:",
+            options=["Por iterações", "Por data/hora", "O que acontecer primeiro"],
+            index=0,
+            horizontal=True,
+            key="auto_stop_criteria",
+        )
+        stop_datetime = None
+        if stop_criteria in ("Por data/hora", "O que acontecer primeiro"):
+            stop_date = st.date_input("Data de parada", key="auto_stop_date")
+            stop_time_val = st.time_input("Hora de parada", value=_dt_module.time(8, 0), key="auto_stop_time")
+            stop_datetime = _dt_module.datetime.combine(stop_date, stop_time_val)
     with cfg2:
         st.info(
             f"📊 **Total estimado de execuções:**\n\n"
@@ -1458,6 +1473,14 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
 
         completed_normally = True
         last_iteration_idx = 0
+        stop_reason = ""
+
+        def time_exceeded() -> bool:
+            if stop_criteria == "Por iterações":
+                return False
+            if stop_datetime and _dt_module.datetime.now() >= stop_datetime:
+                return True
+            return False
 
         # ── Round-robin: iterate first, then models ──────────────────────────
         # This ensures uniform data distribution if stopped early.
