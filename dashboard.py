@@ -988,11 +988,48 @@ def render_results_tab():
         st.warning("Sem dados com IA ou Plotly não disponível.")
         return
 
-    # Prepare data lists
-    ai_times = [float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0]
-    tokens_list = [int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0]
+    # --- Outlier filtering (IQR method) ---
+    def remove_outliers(values, factor=1.5):
+        """Remove outliers using IQR method. Returns cleaned list."""
+        if len(values) < 4:
+            return values
+        s = sorted(values)
+        q1 = s[len(s) // 4]
+        q3 = s[3 * len(s) // 4]
+        iqr = q3 - q1
+        lower = q1 - factor * iqr
+        upper = q3 + factor * iqr
+        return [v for v in values if lower <= v <= upper]
+
+    def percentile(values, p):
+        """Get p-th percentile (0-100)."""
+        s = sorted(values)
+        idx = int(len(s) * p / 100)
+        return s[min(idx, len(s) - 1)]
+
+    # Filter out extreme outliers from ai_rows for visualization
+    all_ai_times = [float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0]
+    all_tokens = [int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0]
+
+    # Use P99 as cap for axis ranges
+    time_cap = percentile(all_ai_times, 97) * 1.3 if all_ai_times else 100
+    token_cap = percentile(all_tokens, 97) * 1.3 if all_tokens else 2000
+
+    # Clean rows (remove extreme outliers for charts, keep for stats table)
+    ai_rows_clean = [r for r in ai_rows
+                     if 0 < float(r["tempo_ia_s"]) <= time_cap
+                     and 0 < int(r["tokens_estimados"]) <= token_cap]
+
+    n_removed = len(ai_rows) - len(ai_rows_clean)
+
+    # Prepare data lists (from clean data)
+    ai_times = [float(r["tempo_ia_s"]) for r in ai_rows_clean]
+    tokens_list = [int(r["tokens_estimados"]) for r in ai_rows_clean]
     toks_per_sec = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
-                    for r in ai_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
+                    for r in ai_rows_clean if float(r["tempo_ia_s"]) > 0]
+
+    if n_removed > 0:
+        st.caption(f"⚠️ {n_removed} outlier(s) extremos removidos dos gráficos (>{time_cap:.0f}s ou >{token_cap:.0f} tokens). Estatísticas descritivas usam dados completos.")
 
     # ── Estatísticas Descritivas (tabela resumo) ─────────────────────────────
     st.markdown("---")
@@ -1017,9 +1054,10 @@ def render_results_tab():
         }
 
     stats_table = [
-        calc_stats(ai_times, "Tempo IA (s)"),
-        calc_stats(tokens_list, "Tokens gerados"),
-        calc_stats(toks_per_sec, "Tokens/segundo"),
+        calc_stats([float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0], "Tempo IA (s)"),
+        calc_stats([int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0], "Tokens gerados"),
+        calc_stats([int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+                    for r in ai_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0], "Tokens/segundo"),
         calc_stats([float(r["tempo_terraform_s"]) for r in ai_rows], "Tempo Terraform (s)"),
     ]
     st.dataframe(stats_table, width="stretch", hide_index=True)
@@ -1031,10 +1069,10 @@ def render_results_tab():
     st.caption("Mostra mediana, quartis e outliers para cada modelo.")
 
     fig_box = go.Figure()
-    models_sorted = sorted(set(r["modelo"] for r in ai_rows))
+    models_sorted = sorted(set(r["modelo"] for r in ai_rows_clean))
     colors = ["#1E88E5", "#43A047", "#E53935", "#FB8C00", "#8E24AA"]
     for idx, m in enumerate(models_sorted):
-        times = [float(r["tempo_ia_s"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
         fig_box.add_trace(go.Box(
             y=times, name=m,
             marker_color=colors[idx % len(colors)],
@@ -1045,6 +1083,7 @@ def render_results_tab():
         height=400,
         margin=dict(t=30, b=40),
         showlegend=False,
+        yaxis=dict(range=[0, time_cap]),
     )
     st.plotly_chart(fig_box, width="stretch")
 
@@ -1056,7 +1095,7 @@ def render_results_tab():
 
     fig_violin = go.Figure()
     for idx, m in enumerate(models_sorted):
-        toks = [int(r["tokens_estimados"]) for r in ai_rows if r["modelo"] == m and int(r["tokens_estimados"]) > 0]
+        toks = [int(r["tokens_estimados"]) for r in ai_rows_clean if r["modelo"] == m and int(r["tokens_estimados"]) > 0]
         fig_violin.add_trace(go.Violin(
             y=toks, name=m,
             box_visible=True,
@@ -1070,6 +1109,7 @@ def render_results_tab():
         height=400,
         margin=dict(t=30, b=40),
         showlegend=False,
+        yaxis=dict(range=[0, token_cap]),
     )
     st.plotly_chart(fig_violin, width="stretch")
 
@@ -1082,7 +1122,7 @@ def render_results_tab():
     fig_hist = go.Figure()
     for idx, m in enumerate(models_sorted):
         tps = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
-               for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
+               for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
         fig_hist.add_trace(go.Histogram(
             x=tps, name=m,
             opacity=0.65,
@@ -1112,12 +1152,12 @@ def render_results_tab():
     st.markdown("### 🗺️ 4. Heatmap — Tempo médio da IA (Modelo × Cenário)")
     st.caption("Quão rápido cada modelo resolve cada tipo de falha. Mais escuro = mais lento.")
 
-    cenarios_sorted = sorted(set(r["cenario"] for r in ai_rows))
+    cenarios_sorted = sorted(set(r["cenario"] for r in ai_rows_clean))
     z_matrix = []
     for m in models_sorted:
         row = []
         for c in cenarios_sorted:
-            vals = [float(r["tempo_ia_s"]) for r in ai_rows
+            vals = [float(r["tempo_ia_s"]) for r in ai_rows_clean
                     if r["modelo"] == m and r["cenario"] == c and float(r["tempo_ia_s"]) > 0]
             row.append(mean(vals) if vals else 0)
         z_matrix.append(row)
@@ -1150,7 +1190,7 @@ def render_results_tab():
     for m in models_sorted:
         row = []
         for c in cenarios_sorted:
-            vals = [int(r["tokens_estimados"]) for r in ai_rows
+            vals = [int(r["tokens_estimados"]) for r in ai_rows_clean
                     if r["modelo"] == m and r["cenario"] == c and int(r["tokens_estimados"]) > 0]
             row.append(mean(vals) if vals else 0)
         z_tok_matrix.append(row)
@@ -1184,7 +1224,7 @@ def render_results_tab():
         tps_by_cenario = []
         for c in cenarios_sorted:
             vals = [int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
-                    for r in ai_rows
+                    for r in ai_rows_clean
                     if r["modelo"] == m and r["cenario"] == c
                     and float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0]
             tps_by_cenario.append(mean(vals) if vals else 0)
@@ -1214,7 +1254,7 @@ def render_results_tab():
 
     fig_tf_box = go.Figure()
     for idx, c in enumerate(cenarios_sorted):
-        vals = [float(r["tempo_terraform_s"]) for r in ai_rows if r["cenario"] == c]
+        vals = [float(r["tempo_terraform_s"]) for r in ai_rows_clean if r["cenario"] == c]
         fig_tf_box.add_trace(go.Box(
             y=vals, name=c,
             marker_color=colors[idx % len(colors)],
@@ -1236,8 +1276,8 @@ def render_results_tab():
 
     fig_scatter = go.Figure()
     for idx, m in enumerate(models_sorted):
-        xs = [float(r["tempo_ia_s"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
-        ys = [int(r["tokens_estimados"]) for r in ai_rows if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        xs = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        ys = [int(r["tokens_estimados"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
         fig_scatter.add_trace(go.Scatter(
             x=xs, y=ys,
             mode="markers",
@@ -1250,6 +1290,8 @@ def render_results_tab():
         height=400,
         margin=dict(t=30, b=40),
         legend=dict(orientation="h", y=-0.15),
+        xaxis=dict(range=[0, time_cap]),
+        yaxis=dict(range=[0, token_cap]),
     )
     st.plotly_chart(fig_scatter, width="stretch")
 
@@ -1262,7 +1304,7 @@ def render_results_tab():
     # Compute metrics per model (normalized)
     model_metrics = {}
     for m in models_sorted:
-        m_rows = [r for r in ai_rows if r["modelo"] == m]
+        m_rows = [r for r in ai_rows_clean if r["modelo"] == m]
         if not m_rows:
             continue
         m_ai_times = [float(r["tempo_ia_s"]) for r in m_rows if float(r["tempo_ia_s"]) > 0]
