@@ -1451,61 +1451,77 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
         add_activity("🤖", f"Automação noturna iniciada: {len(selected_models)} modelos × {iterations} iterações × {len(scenarios)} cenários")
         logger.info(f"🤖 Automação iniciada: {len(selected_models)} modelos, {iterations} iter, {len(scenarios)} cenários")
 
-        total_runs = len(selected_models) * iterations
+        # total_runs = iterations × models (round-robin: each iteration covers ALL models)
+        total_runs = iterations * len(selected_models)
         overall_bar = st.progress(0.0, text="Iniciando automação...")
         runs_done = 0
 
         completed_normally = True
-        for model_idx, auto_model in enumerate(selected_models):
+        last_iteration_idx = 0
+
+        # ── Round-robin: iterate first, then models ──────────────────────────
+        # This ensures uniform data distribution if stopped early.
+        # Iteration 1: model A, model B, model C → Iteration 2: model A, model B, ...
+        for iteration_idx in range(iterations):
+            last_iteration_idx = iteration_idx
             if st.session_state.get("auto_stop_requested"):
                 completed_normally = False
                 break
+            if time_exceeded():
+                completed_normally = False
+                stop_reason = f"horário final atingido ({stop_datetime.strftime('%H:%M')})" if stop_datetime else ""
+                break
 
-            model_label = f"Modelo {model_idx + 1}/{len(selected_models)}: **{auto_model}**"
-            st.markdown(f"### 🧠 {model_label}")
-            add_activity("🧠", f"Automação: iniciando modelo {auto_model} ({model_idx+1}/{len(selected_models)})")
+            st.markdown(f"### 🔁 Iteração {iteration_idx + 1}/{iterations}")
 
-            model_bar = st.progress(0.0, text=f"0/{iterations} iterações")
-
-            for iteration_idx in range(iterations):
+            for model_idx, auto_model in enumerate(selected_models):
                 if st.session_state.get("auto_stop_requested"):
                     completed_normally = False
                     break
+                if time_exceeded():
+                    completed_normally = False
+                    stop_reason = f"horário final atingido ({stop_datetime.strftime('%H:%M')})" if stop_datetime else ""
+                    break
 
-                iter_label = f"Iteração {iteration_idx + 1}/{iterations} — {auto_model}"
-                add_activity("🔁", f"[{auto_model}] Iteração {iteration_idx + 1}/{iterations}")
+                add_activity("🔁", f"Iter {iteration_idx + 1} | [{model_idx+1}/{len(selected_models)}] {auto_model}")
 
-                with st.expander(f"📦 {iter_label}", expanded=False):
+                with st.expander(
+                    f"📦 Iter {iteration_idx + 1} — {auto_model}",
+                    expanded=False,
+                ):
                     for scenario in scenarios:
                         if st.session_state.get("auto_stop_requested"):
+                            break
+                        if time_exceeded():
                             break
                         execute_scenario(
                             scenario,
                             auto_model,
                             ollama_url,
                             timeout,
-                            skip_llm=False,  # always with AI
+                            skip_llm=False,
                             log_container=st,
                             pg_dsn=pg_dsn,
                         )
 
                 runs_done += 1
-                pct_model = (iteration_idx + 1) / iterations
                 pct_overall = runs_done / total_runs
-                model_bar.progress(pct_model, text=f"{iteration_idx + 1}/{iterations} iterações")
-                overall_bar.progress(pct_overall, text=f"Total: {runs_done}/{total_runs} rodadas ({pct_overall*100:.1f}%)")
-
-            add_activity("✅", f"Automação: modelo {auto_model} concluído ({iteration_idx + 1} iterações)")
+                overall_bar.progress(
+                    min(pct_overall, 1.0),
+                    text=f"Total: {runs_done}/{total_runs} ({pct_overall*100:.1f}%) — iter {iteration_idx+1} / modelo {auto_model}",
+                )
 
         st.session_state.auto_running = False
         if completed_normally:
             total_exec = runs_done * len(scenarios)
-            st.success(f"🎉 Automação concluída! {total_exec:,} execuções realizadas com {len(selected_models)} modelo(s).")
+            st.success(f"🎉 Automação concluída! {total_exec:,} execuções com {len(selected_models)} modelo(s) × {last_iteration_idx + 1} iterações.")
             add_activity("🎉", f"Automação concluída: {total_exec:,} execuções totais")
             logger.info(f"🎉 Automação finalizada: {total_exec} execuções")
         else:
-            st.warning(f"⏹️ Automação interrompida após {runs_done * len(scenarios):,} execuções.")
-            add_activity("⏹️", f"Automação interrompida: {runs_done * len(scenarios):,} execuções realizadas")
+            total_exec = runs_done * len(scenarios)
+            reason = getattr(st.session_state, "stop_reason", "pelo usuário")
+            st.warning(f"⏹️ Automação interrompida após {total_exec:,} execuções.")
+            add_activity("⏹️", f"Automação interrompida: {total_exec:,} execuções realizadas")
 
 
 # ---------------------------------------------------------------------------
