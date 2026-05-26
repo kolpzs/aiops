@@ -1210,15 +1210,28 @@ def render_results_tab():
 
     fig_box = go.Figure()
     models_sorted = sorted(set(r["modelo"] for r in ai_rows_clean))
-    # Distinct, accessible color palette for charts
-    colors = ["#FF6B35", "#7B2D8B", "#2ECC71", "#E91E8C", "#F1C40F", "#1ABC9C", "#3498DB", "#E74C3C"]
-    box_colors = colors  # alias for consistency
+
+    # Each chart gets its OWN color palette so they look visually distinct
+    # Model index stays consistent within each chart for readability
+    palettes = {
+        "box_time":    ["#E53935", "#D81B60", "#8E24AA", "#3949AB", "#00897B", "#F4511E"],
+        "violin":      ["#1565C0", "#0277BD", "#00838F", "#2E7D32", "#558B2F", "#F57F17"],
+        "hist_model":  ["#6A1B9A", "#4527A0", "#283593", "#1565C0", "#0277BD", "#00695C"],
+        "hist_tks":    ["#E65100", "#BF360C", "#4E342E", "#37474F", "#1A237E", "#880E4F"],
+        "bar":         ["#F9A825", "#F57F17", "#E65100", "#BF360C", "#880E4F", "#4A148C"],
+        "box_tf":      ["#00695C", "#1B5E20", "#33691E", "#827717", "#FF6F00", "#E65100"],
+        "scatter":     ["#7B1FA2", "#512DA8", "#1976D2", "#0288D1", "#00796B", "#388E3C"],
+        "radar":       ["#C62828", "#283593", "#1B5E20", "#F57F17", "#4A148C", "#006064"],
+    }
+    # Default for any chart not listed above (fallback)
+    colors = palettes["box_time"]
+
     for idx, m in enumerate(models_sorted):
         times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
         fig_box.add_trace(go.Box(
             y=times, name=m,
-            marker_color=colors[idx % len(colors)],
-            boxmean="sd",  # show mean + standard deviation
+            marker_color=palettes["box_time"][idx % len(palettes["box_time"])],
+            boxmean="sd",
         ))
     fig_box.update_layout(
         yaxis_title="Tempo de resposta (s)",
@@ -1242,9 +1255,9 @@ def render_results_tab():
             y=toks, name=m,
             box_visible=True,
             meanline_visible=True,
-            fillcolor=colors[idx % len(colors)],
+            fillcolor=palettes["violin"][idx % len(palettes["violin"])],
             opacity=0.8,
-            line=dict(color=colors[idx % len(colors)], width=2),
+            line=dict(color=palettes["violin"][idx % len(palettes["violin"])], width=2),
         ))
     fig_violin.update_layout(
         yaxis_title="Tokens estimados",
@@ -1269,7 +1282,7 @@ def render_results_tab():
         fig_hist_m.add_trace(go.Histogram(
             x=m_times, name=m,
             nbinsx=30,
-            marker_color=colors[idx % len(colors)],
+            marker_color=palettes["hist_model"][idx % len(palettes["hist_model"])],
             opacity=0.75,
         ))
         m_mean = mean(m_times)
@@ -1311,7 +1324,7 @@ def render_results_tab():
             x=tps, name=m,
             opacity=0.65,
             nbinsx=25,
-            marker_color=colors[idx % len(colors)],
+            marker_color=palettes["hist_tks"][idx % len(palettes["hist_tks"])],
         ))
     # Add vertical lines for overall stats
     overall_mean = mean(toks_per_sec)
@@ -1416,7 +1429,7 @@ def render_results_tab():
             name=m,
             x=cenarios_sorted,
             y=tps_by_cenario,
-            marker_color=colors[idx % len(colors)],
+            marker_color=palettes["bar"][idx % len(palettes["bar"])],
             text=[f"{v:.1f}" for v in tps_by_cenario],
             textposition="outside",
         ))
@@ -1441,7 +1454,7 @@ def render_results_tab():
         vals = [float(r["tempo_terraform_s"]) for r in ai_rows_clean if r["cenario"] == c]
         fig_tf_box.add_trace(go.Box(
             y=vals, name=c,
-            marker_color=colors[idx % len(colors)],
+            marker_color=palettes["box_tf"][idx % len(palettes["box_tf"])],
             boxmean=True,
         ))
     fig_tf_box.update_layout(
@@ -1466,7 +1479,7 @@ def render_results_tab():
             x=xs, y=ys,
             mode="markers",
             name=m,
-            marker=dict(size=6, color=colors[idx % len(colors)], opacity=0.6),
+            marker=dict(size=6, color=palettes["scatter"][idx % len(palettes["scatter"])], opacity=0.6),
         ))
     fig_scatter.update_layout(
         xaxis_title="Tempo IA (s)",
@@ -1520,7 +1533,7 @@ def render_results_tab():
             name=m,
             fill="toself",
             opacity=0.5,
-            line_color=colors[idx % len(colors)],
+            line_color=palettes["radar"][idx % len(palettes["radar"])],
         ))
     fig_radar.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
