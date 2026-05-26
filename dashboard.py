@@ -1145,11 +1145,11 @@ def render_results_tab():
     if n_removed > 0:
         st.caption(f"⚠️ {n_removed} outlier(s) extremos removidos dos gráficos (>{time_cap:.0f}s ou >{token_cap:.0f} tokens). Estatísticas descritivas usam dados completos.")
 
-    # ── Estatísticas Descritivas (tabela resumo) ─────────────────────────────
+    # ── Estatísticas Descritivas por IA ─────────────────────────────────────
     st.markdown("---")
     st.markdown("### Estatísticas Descritivas")
 
-    def calc_stats(values, label):
+    def calc_stats(values, label, model_name="Global"):
         if not values:
             return {}
         try:
@@ -1157,7 +1157,7 @@ def render_results_tab():
         except Exception:
             m = "N/A"
         return {
-            "Métrica": label,
+            "IA / Métrica": f"{model_name} — {label}",
             "N": len(values),
             "Média": f"{mean(values):.2f}",
             "Mediana": f"{median(values):.2f}",
@@ -1167,16 +1167,24 @@ def render_results_tab():
             "Máx": f"{max(values):.2f}",
         }
 
-    stats_table = [
-        calc_stats([float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0], "Tempo IA (s)"),
-        calc_stats([int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0], "Tokens gerados"),
-        calc_stats([int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
-                    for r in ai_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0], "Tokens/segundo"),
-        calc_stats([float(r["tempo_terraform_s"]) for r in ai_rows], "Tempo Terraform (s)"),
-    ]
-    st.dataframe(stats_table, width="stretch", hide_index=True)
+    stats_table = []
+    # Global rows
+    stats_table.append(calc_stats([float(r["tempo_ia_s"]) for r in ai_rows if float(r["tempo_ia_s"]) > 0], "Tempo IA (s)"))
+    stats_table.append(calc_stats([int(r["tokens_estimados"]) for r in ai_rows if int(r["tokens_estimados"]) > 0], "Tokens gerados"))
+    stats_table.append(calc_stats([int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+                    for r in ai_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0], "Tokens/segundo"))
+    stats_table.append(calc_stats([float(r["tempo_terraform_s"]) for r in ai_rows], "Tempo Terraform (s)"))
+    # Per-model rows
+    for m_name in sorted(set(r["modelo"] for r in ai_rows)):
+        m_rows = [r for r in ai_rows if r["modelo"] == m_name]
+        stats_table.append(calc_stats([float(r["tempo_ia_s"]) for r in m_rows if float(r["tempo_ia_s"]) > 0], "Tempo IA (s)", m_name))
+        stats_table.append(calc_stats([int(r["tokens_estimados"]) for r in m_rows if int(r["tokens_estimados"]) > 0], "Tokens gerados", m_name))
+        stats_table.append(calc_stats([int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
+                        for r in m_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0], "Tokens/segundo", m_name))
 
-    # ── Estatísticas por Modelo ──────────────────────────────────────────────
+    st.dataframe([s for s in stats_table if s], width="stretch", hide_index=True)
+
+    # ── Estatísticas por Modelo (resumo compacto) ────────────────────────────
     st.markdown("### Estatísticas por Modelo")
     model_stats = []
     for m in sorted(set(r["modelo"] for r in ai_rows)):
@@ -1521,25 +1529,35 @@ def render_results_tab():
     for cat in categories:
         max_vals[cat] = max(model_metrics[m][cat] for m in model_metrics) or 1
 
+    # Bright neon colors with solid fill on dark bg for radar readability
+    radar_colors = ["#00E5FF", "#FF6D00", "#76FF03", "#EA80FC", "#FFD740", "#FF1744"]
+
     fig_radar = go.Figure()
     for idx, m in enumerate(models_sorted):
         if m not in model_metrics:
             continue
         values = [model_metrics[m][cat] / max_vals[cat] for cat in categories]
         values.append(values[0])  # close the polygon
+        col = radar_colors[idx % len(radar_colors)]
         fig_radar.add_trace(go.Scatterpolar(
             r=values,
             theta=categories + [categories[0]],
             name=m,
             fill="toself",
-            opacity=0.5,
-            line_color=palettes["radar"][idx % len(palettes["radar"])],
+            opacity=0.35,
+            line=dict(color=col, width=3),
+            fillcolor=col,
         ))
     fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
-        height=450,
-        margin=dict(t=40, b=40),
-        legend=dict(orientation="h", y=-0.1),
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 1], gridcolor="rgba(255,255,255,0.2)", tickfont=dict(size=10)),
+            angularaxis=dict(gridcolor="rgba(255,255,255,0.15)"),
+            bgcolor="rgba(30,30,40,0.85)",
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        height=480,
+        margin=dict(t=50, b=50),
+        legend=dict(orientation="h", y=-0.12, font=dict(size=12)),
     )
     st.plotly_chart(fig_radar, width="stretch")
 
