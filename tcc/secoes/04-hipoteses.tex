@@ -1,0 +1,9 @@
+\section{HIPÓTESES}
+
+\textbf{Hipótese Principal:} Modelos de inteligência artificial generativa especializados em código, quando alimentados com um prompt estruturado contendo o log de erro e o código-fonte Terraform, são capazes de identificar corretamente a causa raiz da falha e sugerir correções válidas em pelo menos 70\% dos cenários de erro avaliados.
+
+\textbf{Hipótese Secundária 1:} A técnica de \textit{context prompting} estruturado --- que inclui o papel definido (engenheiro DevOps sênior), o código completo da infraestrutura e o log de erro integral --- produz respostas mais assertivas do que prompts genéricos sem contexto de infraestrutura.
+
+\textbf{Hipótese Secundária 2:} Modelos de linguagem executados localmente via Ollama apresentam desempenho comparável em termos de assertividade na análise de falhas, embora com diferenças significativas em tempo de resposta e completude das sugestões de correção.
+
+\textbf{Hipótese Secundária 3:} A execução local dos modelos, sem conexão com serviços externos, é viável em hardware doméstico (16\,GB de RAM, GPU integrada) e não compromete a qualidade das análises para cenários de complexidade moderada.

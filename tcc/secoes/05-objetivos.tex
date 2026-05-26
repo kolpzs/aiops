@@ -1,0 +1,15 @@
+\section{OBJETIVO}
+
+\subsection{Objetivo Geral}
+
+Avaliar a eficácia de modelos de Inteligência Artificial Generativa executados localmente na análise automatizada de logs de falhas em Infraestrutura como Código (Terraform), por meio de uma abordagem de \textit{context prompting} estruturado.
+
+\subsection{Objetivos Específicos}
+
+\begin{itemize}
+    \item Projetar e implementar um \textit{pipeline} automatizado que capture logs de erro do Terraform, combine-os com o código-fonte da infraestrutura e submeta o contexto a modelos de linguagem locais via API do Ollama.
+    \item Catalogar e implementar cenários controlados de falhas em Terraform, abrangendo categorias como erros de sintaxe, dependências cíclicas, conflitos de recursos e configurações inválidas.
+    \item Comparar o desempenho de três modelos de linguagem de fabricantes distintos --- CodeLlama (Meta), DeepSeek-Coder (DeepSeek) e Qwen2.5-Coder (Alibaba) --- na identificação da causa raiz e na sugestão de correções.
+    \item Analisar quantitativamente os resultados por meio de métricas de assertividade, tempo de resposta e volume de \textit{tokens} processados, utilizando técnicas estatísticas descritivas e visualizações gráficas.
+    \item Desenvolver um \textit{dashboard} interativo em Streamlit para visualização dos resultados, com suporte a exportação em PDF para inclusão em relatórios acadêmicos.
+\end{itemize}

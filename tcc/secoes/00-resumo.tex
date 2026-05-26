@@ -1,0 +1,10 @@
+\section*{RESUMO}
+\thispagestyle{empty}
+
+A crescente adoção de Infraestrutura como Código (IaC) por meio de ferramentas como o Terraform trouxe benefícios significativos para o gerenciamento de ambientes computacionais, porém também introduziu complexidade na análise e resolução de falhas durante o provisionamento de recursos. Os logs de erro gerados por essas ferramentas frequentemente exigem conhecimento especializado para interpretação, o que representa um gargalo operacional em equipes de DevOps e SRE. Este trabalho propõe uma abordagem estruturada para a análise automatizada de logs de falhas em IaC, utilizando modelos de Inteligência Artificial Generativa executados localmente por meio da plataforma Ollama. A metodologia consiste em um pipeline que captura automaticamente os logs de erro do Terraform, combina-os com o código-fonte da infraestrutura e submete o contexto completo a três modelos de linguagem distintos --- CodeLlama (Meta), DeepSeek-Coder (DeepSeek) e Qwen2.5-Coder (Alibaba) --- por meio de \textit{context prompting} estruturado. A pesquisa avalia comparativamente o desempenho dos modelos em cenários controlados de falhas, mensurando assertividade na identificação da causa raiz, aderência às melhores práticas documentadas e tempo de resposta. Os resultados são coletados automaticamente e analisados por meio de um \textit{dashboard} estatístico com visualizações como \textit{box plots}, gráficos \textit{violin}, histogramas e gráficos radar, permitindo uma comparação quantitativa rigorosa entre os modelos. A execução inteiramente local garante que nenhum dado sensível da infraestrutura seja exposto a serviços externos, atendendo requisitos de segurança e privacidade corporativa.
+
+\vspace{0.4cm}
+
+\noindent \textbf{Palavras-Chave:}
+\par
+\noindent Infraestrutura como Código, Inteligência Artificial Generativa, Análise de Logs, DevOps, Modelos de Linguagem Locais.

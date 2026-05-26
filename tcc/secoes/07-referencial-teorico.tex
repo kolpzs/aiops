@@ -1,0 +1,33 @@
+\section{REFERENCIAL TEÓRICO}
+
+\subsection{Infraestrutura como Código (IaC)}
+
+A Infraestrutura como Código é uma prática que consiste em gerenciar e provisionar recursos computacionais por meio de arquivos de configuração legíveis por máquina, em substituição a processos manuais interativos \cite{morris2020}. Segundo \citeonline{brikman2022}, a IaC traz benefícios como reprodutibilidade, versionamento, auditabilidade e automação do ciclo de vida da infraestrutura, permitindo que equipes apliquem ao gerenciamento de ambientes as mesmas práticas de engenharia de software utilizadas no desenvolvimento de aplicações.
+
+O Terraform, desenvolvido pela HashiCorp, consolidou-se como uma das principais ferramentas de IaC ao adotar uma abordagem declarativa e independente de provedor (\textit{provider-agnostic}), permitindo o gerenciamento unificado de recursos em plataformas como AWS, Azure, Google Cloud e ambientes locais como Docker \cite{brikman2022}.
+
+\subsection{DevOps e Site Reliability Engineering}
+
+O movimento DevOps representa uma filosofia que enfatiza a colaboração entre equipes de desenvolvimento e operações, visando aumentar a frequência e confiabilidade das entregas de software \cite{kim2016}. Complementarmente, a disciplina de \textit{Site Reliability Engineering} (SRE), formalizada por \citeonline{beyer2016}, aplica princípios de engenharia de software a problemas de operações, introduzindo conceitos como orçamento de erros, monitoramento baseado em SLIs/SLOs e automação de resposta a incidentes.
+
+Nesse contexto, a análise de logs de falhas é uma atividade central tanto em DevOps quanto em SRE, representando uma etapa crítica no fluxo de resposta a incidentes e na melhoria contínua dos processos de provisionamento.
+
+\subsection{Grandes Modelos de Linguagem (LLMs) para Código}
+
+Os Grandes Modelos de Linguagem são redes neurais treinadas em vastos \textit{corpora} de texto, capazes de compreender e gerar linguagem natural e código-fonte \cite{vaswani2017}. A evolução dos LLMs especializados em código produziu modelos notáveis:
+
+\begin{itemize}
+    \item \textbf{CodeLlama} \cite{roziere2023}: Desenvolvido pela Meta, é uma família de modelos derivados do Llama 2, ajustados com 500 bilhões de \textit{tokens} de código. Oferece capacidades de geração, completação e explicação de código em múltiplas linguagens.
+    \item \textbf{DeepSeek-Coder} \cite{guo2024}: Criado pela empresa chinesa DeepSeek, foi treinado com 2 trilhões de \textit{tokens} compostos por 87\% de código e 13\% de linguagem natural, demonstrando desempenho competitivo em benchmarks como HumanEval e MBPP.
+    \item \textbf{Qwen2.5-Coder} \cite{hui2024}: Produzido pelo grupo Alibaba, é parte da família Qwen, treinado com foco em compreensão e geração de código, com suporte a mais de 92 linguagens de programação.
+\end{itemize}
+
+\subsection{Context Prompting e Engenharia de Prompts}
+
+A engenharia de prompts refere-se ao processo de projetar instruções que direcionem o comportamento dos LLMs para tarefas específicas \cite{white2023}. A técnica de \textit{context prompting} consiste em fornecer ao modelo informações contextuais detalhadas --- como o papel que deve assumir, os dados de entrada e o formato esperado da resposta --- maximizando a relevância e precisão das respostas geradas.
+
+No contexto desta pesquisa, o \textit{context prompting} é aplicado ao fornecer simultaneamente o código Terraform e o log de erro ao modelo, instruindo-o a atuar como um engenheiro DevOps sênior na identificação da causa raiz e na proposição de correções.
+
+\subsection{Ollama: Execução Local de LLMs}
+
+O Ollama é uma plataforma de código aberto que permite a execução local de grandes modelos de linguagem, oferecendo uma API REST compatível com padrões de mercado \cite{ollama2024}. Sua arquitetura possibilita o download, gerenciamento e execução de modelos em hardware convencional, eliminando a necessidade de infraestrutura em nuvem e garantindo a privacidade dos dados processados. A plataforma suporta quantização de modelos, permitindo sua execução em máquinas com recursos limitados sem comprometimento significativo da qualidade das respostas.

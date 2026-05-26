@@ -1,0 +1,33 @@
+\section*{APÊNDICES}
+\thispagestyle{empty}
+
+\textbf{Apêndice 1 --- Estrutura do Prompt Enviado aos Modelos}
+
+\begin{verbatim}
+Atue como um Engenheiro DevOps Sênior.
+Abaixo está o código Terraform da minha infraestrutura
+e o log de erro gerado durante o 'apply'.
+
+Sua tarefa é analisar o contexto e fornecer:
+1. CAUSA RAIZ: Explique tecnicamente o que falhou.
+2. CORREÇÃO: Sugira o bloco de código exato para
+   refatorar o arquivo .tf e corrigir o problema,
+   seguindo as melhores práticas da documentação.
+
+Não invente dependências externas.
+Baseie-se apenas no código fornecido.
+
+--- CÓDIGO TERRAFORM ---
+[conteúdo do arquivo main.tf]
+
+--- LOG DE ERRO ---
+[saída do terraform plan/apply]
+\end{verbatim}
+
+\vspace{1cm}
+
+\textbf{Apêndice 2 --- Repositório do Projeto}
+
+O código-fonte completo do MVP, incluindo o \textit{dashboard}, o script de automação e os cenários de falha, está disponível publicamente no repositório GitHub:
+
+\texttt{https://github.com/kolpzs/aiops}
