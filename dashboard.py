@@ -469,8 +469,8 @@ def render_activity_log_tab():
         st.session_state.activity_log = []
         st.rerun()
 
-    # Render as a scrollable container
-    log_text = "\n".join(
+    # Render as a scrollable container with clear separation between entries
+    log_text = "\n\n".join(
         f"`{entry['time']}` {entry['icon']} {entry['message']}"
         for entry in st.session_state.activity_log
     )
@@ -1063,6 +1063,32 @@ def render_results_tab():
     ]
     st.dataframe(stats_table, width="stretch", hide_index=True)
 
+    # ── Estatísticas por Modelo ──────────────────────────────────────────────
+    st.markdown("### 🤖 Estatísticas por Modelo")
+    model_stats = []
+    for m in sorted(set(r["modelo"] for r in ai_rows)):
+        m_rows = [r for r in ai_rows if r["modelo"] == m]
+        m_times = [float(r["tempo_ia_s"]) for r in m_rows if float(r["tempo_ia_s"]) > 0]
+        m_tokens = [int(r["tokens_estimados"]) for r in m_rows if int(r["tokens_estimados"]) > 0]
+        m_tps = [t / s for t, s in zip(m_tokens, m_times) if s > 0] if m_times else []
+        try:
+            m_mode = mode(m_times)
+            m_mode_str = f"{m_mode:.2f}"
+        except Exception:
+            m_mode_str = "N/A"
+        model_stats.append({
+            "Modelo": m,
+            "Execuções": len(m_rows),
+            "Tempo Mín (s)": f"{min(m_times):.2f}" if m_times else "N/A",
+            "Tempo Máx (s)": f"{max(m_times):.2f}" if m_times else "N/A",
+            "Tempo Médio (s)": f"{mean(m_times):.2f}" if m_times else "N/A",
+            "Mediana (s)": f"{median(m_times):.2f}" if m_times else "N/A",
+            "Moda (s)": m_mode_str,
+            "Tokens Médio": f"{mean(m_tokens):.0f}" if m_tokens else "N/A",
+            "Tok/s Médio": f"{mean(m_tps):.1f}" if m_tps else "N/A",
+        })
+    st.dataframe(model_stats, width="stretch", hide_index=True)
+
     st.markdown("---")
 
     # ── CHART 1: Box Plot — Tempo IA por Modelo ──────────────────────────────
@@ -1113,6 +1139,48 @@ def render_results_tab():
         yaxis=dict(range=[0, token_cap]),
     )
     st.plotly_chart(fig_violin, width="stretch")
+
+    st.markdown("---")
+
+    # ── CHART 2.5: Histograma — Distribuição Tempo IA por Modelo ────────────
+    st.markdown("### 📊 2.5. Histograma — Distribuição do Tempo de Resposta por Modelo")
+    st.caption("Barras mostram frequência. Linhas verticais: média (tracejada), mediana (pontilhada), moda (sólida).")
+
+    for idx, m in enumerate(models_sorted):
+        m_times = [float(r["tempo_ia_s"]) for r in ai_rows_clean if r["modelo"] == m and float(r["tempo_ia_s"]) > 0]
+        if not m_times:
+            continue
+        fig_hist_m = go.Figure()
+        fig_hist_m.add_trace(go.Histogram(
+            x=m_times, name=m,
+            nbinsx=30,
+            marker_color=colors[idx % len(colors)],
+            opacity=0.75,
+        ))
+        m_mean = mean(m_times)
+        m_median = median(m_times)
+        try:
+            m_mode_val = mode(m_times)
+        except Exception:
+            m_mode_val = None
+
+        fig_hist_m.add_vline(x=m_mean, line_dash="dash", line_color="#1E88E5", line_width=2,
+                             annotation_text=f"Média: {m_mean:.1f}s", annotation_position="top right")
+        fig_hist_m.add_vline(x=m_median, line_dash="dot", line_color="#43A047", line_width=2,
+                             annotation_text=f"Mediana: {m_median:.1f}s", annotation_position="top left")
+        if m_mode_val is not None:
+            fig_hist_m.add_vline(x=m_mode_val, line_dash="solid", line_color="#E53935", line_width=2,
+                                 annotation_text=f"Moda: {m_mode_val:.1f}s", annotation_position="bottom right")
+
+        fig_hist_m.update_layout(
+            title=f"{m} — {len(m_times)} execuções | Mín: {min(m_times):.1f}s | Máx: {max(m_times):.1f}s",
+            xaxis_title="Tempo de resposta (s)",
+            yaxis_title="Frequência",
+            height=320,
+            margin=dict(t=50, b=40),
+            showlegend=False,
+        )
+        st.plotly_chart(fig_hist_m, width="stretch")
 
     st.markdown("---")
 
@@ -1368,7 +1436,7 @@ def render_results_tab():
 # UI: Tab - Automation (overnight batch run)
 # ---------------------------------------------------------------------------
 def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, pg_dsn: str = ""):
-    st.subheader("🤖 Automação Noturna")
+    st.subheader("🤖 Automação")
     st.markdown(
         "Roda **todos os cenários** com **todos os modelos instalados** N vezes cada, "
         "coletando dados em massa para análise estatística do TCC."
