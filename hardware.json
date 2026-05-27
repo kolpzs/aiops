@@ -1,0 +1,15 @@
+{
+  "machines": {
+    "machine-01": {
+      "label": "kolpzs (i7-13620H)",
+      "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
+      "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+      "npu": "",
+      "ram_gb": 31,
+      "os": "Linux Mint 22.3",
+      "compute_unit": "GPU",
+      "notes": "Auto-detectado na inicialização",
+      "registered_at": "2026-05-27T09:27:01.009622"
+    }
+  }
+}
