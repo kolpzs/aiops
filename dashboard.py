@@ -595,13 +595,15 @@ def build_prompt(scenario: dict, tf_code: str, exec_log: str) -> str:
         {criteria}
 
         Entregue exatamente estas seções:
-        1. CAUSA RAIZ
-        2. CORREÇÃO
-        3. TRECHO DE CÓDIGO SUGERIDO
-        4. AVALIAÇÃO DE SEGURANÇA
+        1. CAUSA RAIZ — explique tecnicamente o que falhou.
+        2. CORREÇÃO — descreva a estratégia de correção.
+        3. TRECHO DE CÓDIGO SUGERIDO — OBRIGATÓRIO: inclua o arquivo main.tf completo e corrigido dentro de um bloco de código cercado por ```hcl e ```. O bloco DEVE conter todo o código Terraform necessário para corrigir o problema, incluindo terraform {{}}, provider, e todos os resources. NÃO omita nenhuma parte do código.
+        4. AVALIAÇÃO DE SEGURANÇA — avalie se a correção é segura.
         5. RELAÇÃO COM OS CRITÉRIOS DO EXPERIMENTO
 
-        Regras:
+        REGRAS OBRIGATÓRIAS:
+        - Você DEVE incluir um bloco ```hcl com o código Terraform completo corrigido. Sem este bloco, a resposta é inválida.
+        - Preserve os mesmos providers do código original (ex: kreuzwerker/docker). NÃO troque para hashicorp/docker.
         - Não invente dependências externas.
         - Não sugira expor segredos ou desabilitar validações.
         - Baseie a resposta somente no código e no log fornecidos.
@@ -632,21 +634,30 @@ def extract_code_from_ai(ai_response: str) -> str | None:
     if not ai_response:
         return None
 
-    # Strategy 1: find code block after "TRECHO DE CÓDIGO SUGERIDO"
-    pattern = r"(?:TRECHO DE CÓDIGO SUGERIDO|CÓDIGO SUGERIDO).*?```(?:\w*)\n(.*?)```"
+    HCL_KEYWORDS = ("resource", "terraform", "locals", "variable", "provider", "docker", "data", "output", "module")
+
+    # Strategy 1: find code block after "TRECHO DE CÓDIGO SUGERIDO" or similar headers
+    pattern = r"(?:TRECHO DE CÓDIGO SUGERIDO|CÓDIGO SUGERIDO|CODIGO SUGERIDO|CÓDIGO CORRIGIDO|CODIGO CORRIGIDO).*?```(?:\w*)\n(.*?)```"
     match = re.search(pattern, ai_response, re.DOTALL | re.IGNORECASE)
     if match:
         code = match.group(1).strip()
-        if code and ("resource" in code or "terraform" in code or "locals" in code
-                      or "variable" in code or "provider" in code or "docker" in code):
+        if code and any(kw in code for kw in HCL_KEYWORDS):
             return code
 
     # Strategy 2: find the largest HCL code block in the response
-    blocks = re.findall(r"```(?:hcl|terraform|tf)?\n(.*?)```", ai_response, re.DOTALL)
+    blocks = re.findall(r"```(?:hcl|terraform|tf|HCL|Terraform)?\n(.*?)```", ai_response, re.DOTALL)
     if blocks:
         # Return the longest block that looks like valid HCL
         hcl_blocks = [b.strip() for b in blocks
-                      if any(kw in b for kw in ("resource", "terraform", "locals", "variable", "provider", "docker"))]
+                      if any(kw in b for kw in HCL_KEYWORDS)]
+        if hcl_blocks:
+            return max(hcl_blocks, key=len)
+
+    # Strategy 3: find ANY code block (no language tag) that looks like HCL
+    all_blocks = re.findall(r"```\n(.*?)```", ai_response, re.DOTALL)
+    if all_blocks:
+        hcl_blocks = [b.strip() for b in all_blocks
+                      if any(kw in b for kw in HCL_KEYWORDS)]
         if hcl_blocks:
             return max(hcl_blocks, key=len)
 
@@ -2201,29 +2212,19 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
         last_iteration_idx = 0
         stop_reason = ""
 
-        def time_exceeded() -> bool:
-            if stop_criteria == "Por iterações":
+        try:
+            def time_exceeded() -> bool:
+                if stop_criteria == "Por iterações":
+                    return False
+                if stop_datetime and _dt_module.datetime.now() >= stop_datetime:
+                    return True
                 return False
-            if stop_datetime and _dt_module.datetime.now() >= stop_datetime:
-                return True
-            return False
 
-        # ── Round-robin: iterate first, then models ──────────────────────────
-        # This ensures uniform data distribution if stopped early.
-        # Iteration 1: model A, model B, model C → Iteration 2: model A, model B, ...
-        for iteration_idx in range(iterations):
-            last_iteration_idx = iteration_idx
-            if st.session_state.get("auto_stop_requested"):
-                completed_normally = False
-                break
-            if time_exceeded():
-                completed_normally = False
-                stop_reason = f"horário final atingido ({stop_datetime.strftime('%H:%M')})" if stop_datetime else ""
-                break
-
-            st.markdown(f"### 🔁 Iteração {iteration_idx + 1}/{iterations}")
-
-            for model_idx, auto_model in enumerate(selected_models):
+            # ── Round-robin: iterate first, then models ──────────────────────────
+            # This ensures uniform data distribution if stopped early.
+            # Iteration 1: model A, model B, model C → Iteration 2: model A, model B, ...
+            for iteration_idx in range(iterations):
+                last_iteration_idx = iteration_idx
                 if st.session_state.get("auto_stop_requested"):
                     completed_normally = False
                     break
@@ -2232,36 +2233,54 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
                     stop_reason = f"horário final atingido ({stop_datetime.strftime('%H:%M')})" if stop_datetime else ""
                     break
 
-                add_activity("🔁", f"Iter {iteration_idx + 1} | [{model_idx+1}/{len(selected_models)}] {auto_model}")
+                st.markdown(f"### 🔁 Iteração {iteration_idx + 1}/{iterations}")
 
-                with st.expander(
-                    f"📦 Iter {iteration_idx + 1} — {auto_model}",
-                    expanded=False,
-                ):
-                    for scenario in scenarios:
-                        if st.session_state.get("auto_stop_requested"):
-                            break
-                        if time_exceeded():
-                            break
-                        execute_scenario(
-                            scenario,
-                            auto_model,
-                            ollama_url,
-                            timeout,
-                            skip_llm=False,
-                            log_container=st,
-                            pg_dsn=pg_dsn,
-                            hw_snapshot=hw_snapshot,
-                        )
+                for model_idx, auto_model in enumerate(selected_models):
+                    if st.session_state.get("auto_stop_requested"):
+                        completed_normally = False
+                        break
+                    if time_exceeded():
+                        completed_normally = False
+                        stop_reason = f"horário final atingido ({stop_datetime.strftime('%H:%M')})" if stop_datetime else ""
+                        break
 
-                runs_done += 1
-                pct_overall = runs_done / total_runs
-                overall_bar.progress(
-                    min(pct_overall, 1.0),
-                    text=f"Total: {runs_done}/{total_runs} ({pct_overall*100:.1f}%) — iter {iteration_idx+1} / modelo {auto_model}",
-                )
+                    add_activity("🔁", f"Iter {iteration_idx + 1} | [{model_idx+1}/{len(selected_models)}] {auto_model}")
 
-        st.session_state.auto_running = False
+                    with st.expander(
+                        f"📦 Iter {iteration_idx + 1} — {auto_model}",
+                        expanded=False,
+                    ):
+                        for scenario in scenarios:
+                            if st.session_state.get("auto_stop_requested"):
+                                break
+                            if time_exceeded():
+                                break
+                            execute_scenario(
+                                scenario,
+                                auto_model,
+                                ollama_url,
+                                timeout,
+                                skip_llm=False,
+                                log_container=st,
+                                pg_dsn=pg_dsn,
+                                hw_snapshot=hw_snapshot,
+                            )
+
+                    runs_done += 1
+                    pct_overall = runs_done / total_runs
+                    overall_bar.progress(
+                        min(pct_overall, 1.0),
+                        text=f"Total: {runs_done}/{total_runs} ({pct_overall*100:.1f}%) — iter {iteration_idx+1} / modelo {auto_model}",
+                    )
+
+        except Exception as e:
+            completed_normally = False
+            stop_reason = f"erro: {e}"
+            logger.error(f"❌ Erro na automação: {e}")
+            st.error(f"❌ Erro durante automação: {e}")
+        finally:
+            st.session_state.auto_running = False
+
         if completed_normally:
             total_exec = runs_done * len(scenarios)
             st.success(f"🎉 Automação concluída! {total_exec:,} execuções com {len(selected_models)} modelo(s) × {last_iteration_idx + 1} iterações.")

@@ -2,6 +2,13 @@
 # Disable file watcher to prevent auto-reload when CSV/JSON files change
 fileWatcherType = "none"
 headless = true
+# Increase WebSocket timeout for long-running automations
+enableWebsocketCompression = false
+maxMessageSize = 200
 
 [browser]
 gatherUsageStats = false
+
+[runner]
+# Prevent Streamlit from re-running on script changes during automation
+fastReruns = false
