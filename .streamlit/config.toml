@@ -1,0 +1,7 @@
+[server]
+# Disable file watcher to prevent auto-reload when CSV/JSON files change
+fileWatcherType = "none"
+headless = true
+
+[browser]
+gatherUsageStats = false

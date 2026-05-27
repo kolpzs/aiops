@@ -99,8 +99,17 @@ HARDWARE_FILE = ROOT / "hardware.json"
 
 def _run_cmd(args: list[str], timeout: int = 5, shell: bool = False) -> str:
     """Run a shell command and return stdout, empty string on failure."""
+    import platform
     try:
-        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, shell=shell)
+        kwargs = dict(capture_output=True, text=True, timeout=timeout, shell=shell)
+        # Windows: suppress console popup window
+        if platform.system() == "Windows":
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            si.wShowWindow = 0  # SW_HIDE
+            kwargs["startupinfo"] = si
+            kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
+        r = subprocess.run(args, **kwargs)
         return r.stdout.strip() if r.returncode == 0 else ""
     except Exception:
         return ""
@@ -2380,14 +2389,14 @@ def main():
     # --- Hardware detection (once per session) ---
     if "hw_snapshot" not in st.session_state:
         try:
-            with st.spinner("Detectando hardware..."):
-                detected = detect_hardware_snapshot()
-                catalog = load_hardware_catalog()
-                hw_id = get_or_create_hw_entry(catalog, detected)
-                detected["hw_id"] = hw_id
-                detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+            detected = detect_hardware_snapshot()
+            catalog = load_hardware_catalog()
+            hw_id = get_or_create_hw_entry(catalog, detected)
+            detected["hw_id"] = hw_id
+            detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
             st.session_state["hw_snapshot"] = detected
             st.session_state["hw_catalog"] = catalog
+            add_activity("💻", f"Hardware detectado: {detected.get('label','?')}")
         except Exception as _hw_err:
             st.session_state["hw_snapshot"] = {
                 "cpu": "Unknown", "gpu": "", "npu": "", "ram_gb": 0,
