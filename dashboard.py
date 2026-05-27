@@ -97,23 +97,34 @@ HARDWARE_FILE = ROOT / "hardware.json"
 # Hardware detection and catalog
 # ---------------------------------------------------------------------------
 
-def _run_cmd(args: list[str], timeout: int = 5) -> str:
+def _run_cmd(args: list[str], timeout: int = 5, shell: bool = False) -> str:
     """Run a shell command and return stdout, empty string on failure."""
     try:
-        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, shell=shell)
         return r.stdout.strip() if r.returncode == 0 else ""
     except Exception:
         return ""
 
 
 def detect_cpu() -> str:
-    """Return CPU model name string."""
+    """Return CPU model name string (Linux, macOS, Windows)."""
     import platform
     # Linux: lscpu
     out = _run_cmd(["lscpu"])
     for line in out.splitlines():
         if "Model name" in line:
             return line.split(":", 1)[1].strip()
+    # Windows: wmic
+    if platform.system() == "Windows":
+        out_w = _run_cmd(["wmic", "cpu", "get", "Name", "/value"])
+        for line in out_w.splitlines():
+            if line.startswith("Name="):
+                return line.split("=", 1)[1].strip()
+        # Fallback: PowerShell
+        out_ps = _run_cmd(["powershell", "-NoProfile", "-Command",
+                           "(Get-CimInstance Win32_Processor).Name"], timeout=10)
+        if out_ps:
+            return out_ps.splitlines()[0].strip()
     # macOS
     out2 = _run_cmd(["sysctl", "-n", "machdep.cpu.brand_string"])
     if out2:
@@ -122,12 +133,27 @@ def detect_cpu() -> str:
 
 
 def detect_gpu() -> str | None:
-    """Return GPU name string, or None if not found."""
-    # NVIDIA
+    """Return GPU name string, or None if not found (Linux, macOS, Windows)."""
+    import platform
+    # NVIDIA (works on all OS with drivers installed)
     out = _run_cmd(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
     if out:
         return out.splitlines()[0].strip()
-    # AMD via rocm-smi
+    # Windows: wmic for any GPU
+    if platform.system() == "Windows":
+        out_w = _run_cmd(["wmic", "path", "Win32_VideoController", "get", "Name", "/value"])
+        for line in out_w.splitlines():
+            if line.startswith("Name="):
+                name = line.split("=", 1)[1].strip()
+                if name and "Microsoft" not in name:
+                    return name
+        # Fallback: PowerShell
+        out_ps = _run_cmd(["powershell", "-NoProfile", "-Command",
+                           "(Get-CimInstance Win32_VideoController | Where-Object {$_.Name -notlike '*Microsoft*'}).Name"],
+                          timeout=10)
+        if out_ps:
+            return out_ps.splitlines()[0].strip()
+    # AMD via rocm-smi (Linux)
     out2 = _run_cmd(["rocm-smi", "--showproductname"])
     if out2:
         for line in out2.splitlines():
@@ -146,28 +172,52 @@ def detect_npu() -> str | None:
     """Return NPU description if found, else None.
     
     Checks for:
-    - Intel NPU (Meteor Lake / Core Ultra)  via /dev/accel
-    - AMD Ryzen AI NPU via xdna driver
-    - Qualcomm NPU via /dev/qaic
+    - Intel NPU (Meteor Lake / Core Ultra / Arrow Lake) on Linux and Windows
+    - AMD Ryzen AI NPU via xdna driver (Linux)
+    - Qualcomm NPU via /dev/qaic (Linux)
     """
-    import os
-    # Intel NPU (accel driver, kernel 6.7+)
-    accel_dir = "/dev/accel"
-    if os.path.isdir(accel_dir) and os.listdir(accel_dir):
-        cpu = detect_cpu()
-        return f"Intel NPU ({cpu})"
-    # AMD Ryzen AI
-    xdna = _run_cmd(["dmesg"])
-    if "xdna" in xdna.lower() or "ryzen ai" in xdna.lower():
-        return "AMD Ryzen AI NPU"
-    # Qualcomm
-    if os.path.exists("/dev/qaic0"):
-        return "Qualcomm Cloud AI"
+    import platform
+    _os = platform.system()
+
+    # --- Windows: check Device Manager for Intel NPU ---
+    if _os == "Windows":
+        # Intel NPU appears as "Intel(R) AI Boost" or "NPU" in PnP devices
+        out = _run_cmd(["powershell", "-NoProfile", "-Command",
+                        "Get-PnpDevice -FriendlyName '*NPU*','*Neural*','*AI Boost*' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FriendlyName"],
+                       timeout=10)
+        if out:
+            return out.splitlines()[0].strip()
+        # Also try wmic
+        out2 = _run_cmd(["wmic", "path", "Win32_PnPEntity", "where",
+                         "Name like '%NPU%' or Name like '%Neural%' or Name like '%AI Boost%'",
+                         "get", "Name", "/value"])
+        for line in out2.splitlines():
+            if line.startswith("Name="):
+                return line.split("=", 1)[1].strip()
+
+    # --- Linux ---
+    if _os == "Linux":
+        import os as _os_mod
+        # Intel NPU (accel driver, kernel 6.7+)
+        accel_dir = "/dev/accel"
+        if _os_mod.path.isdir(accel_dir) and _os_mod.listdir(accel_dir):
+            cpu = detect_cpu()
+            return f"Intel NPU ({cpu})"
+        # AMD Ryzen AI
+        xdna = _run_cmd(["dmesg"])
+        if "xdna" in xdna.lower() or "ryzen ai" in xdna.lower():
+            return "AMD Ryzen AI NPU"
+        # Qualcomm
+        if _os_mod.path.exists("/dev/qaic0"):
+            return "Qualcomm Cloud AI"
+
     return None
 
 
 def detect_ram_gb() -> int:
-    """Return total RAM in GB."""
+    """Return total RAM in GB (Linux, macOS, Windows)."""
+    import platform
+    # Linux
     try:
         with open("/proc/meminfo") as f:
             for line in f:
@@ -176,9 +226,28 @@ def detect_ram_gb() -> int:
                     return round(kb / 1024 / 1024)
     except Exception:
         pass
-    out = _run_cmd(["sysctl", "-n", "hw.memsize"])  # macOS
-    if out:
-        return round(int(out) / 1024 ** 3)
+    # Windows
+    if platform.system() == "Windows":
+        out = _run_cmd(["wmic", "computersystem", "get", "TotalPhysicalMemory", "/value"])
+        for line in out.splitlines():
+            if line.startswith("TotalPhysicalMemory="):
+                try:
+                    return round(int(line.split("=", 1)[1].strip()) / 1024 ** 3)
+                except ValueError:
+                    pass
+        # Fallback: PowerShell
+        out_ps = _run_cmd(["powershell", "-NoProfile", "-Command",
+                           "[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB)"],
+                          timeout=10)
+        if out_ps:
+            try:
+                return int(out_ps.strip())
+            except ValueError:
+                pass
+    # macOS
+    out2 = _run_cmd(["sysctl", "-n", "hw.memsize"])
+    if out2:
+        return round(int(out2) / 1024 ** 3)
     return 0
 
 
@@ -2251,7 +2320,7 @@ def render_hardware_tab():
                 "Compute": m.get("compute_unit", "cpu").upper(),
                 "Registrada em": m.get("registered_at", "?")[:10],
             })
-        st.dataframe(rows, use_container_width=True)
+        st.dataframe(rows, width="stretch")
     else:
         st.caption("Nenhuma máquina registrada ainda.")
 
@@ -2310,14 +2379,23 @@ def main():
 
     # --- Hardware detection (once per session) ---
     if "hw_snapshot" not in st.session_state:
-        with st.spinner("Detectando hardware..."):
-            detected = detect_hardware_snapshot()
-            catalog = load_hardware_catalog()
-            hw_id = get_or_create_hw_entry(catalog, detected)
-            detected["hw_id"] = hw_id
-            detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
-        st.session_state["hw_snapshot"] = detected
-        st.session_state["hw_catalog"] = catalog
+        try:
+            with st.spinner("Detectando hardware..."):
+                detected = detect_hardware_snapshot()
+                catalog = load_hardware_catalog()
+                hw_id = get_or_create_hw_entry(catalog, detected)
+                detected["hw_id"] = hw_id
+                detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+            st.session_state["hw_snapshot"] = detected
+            st.session_state["hw_catalog"] = catalog
+        except Exception as _hw_err:
+            st.session_state["hw_snapshot"] = {
+                "cpu": "Unknown", "gpu": "", "npu": "", "ram_gb": 0,
+                "os": "Unknown", "compute_unit": "CPU", "hw_id": "unknown",
+                "label": "unknown",
+            }
+            st.session_state["hw_catalog"] = {"machines": {}}
+            add_activity("⚠️", f"Falha na detecção de hardware: {_hw_err}")
 
     hw_snapshot = st.session_state["hw_snapshot"]
 
