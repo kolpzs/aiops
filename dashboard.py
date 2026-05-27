@@ -86,6 +86,7 @@ CSV_HEADERS = [
     "timestamp", "cenario", "titulo", "modelo", "timeout_config",
     "etapa_falha", "status", "tempo_terraform_s", "tempo_ia_s",
     "tokens_estimados", "ia_executada", "relatorio_path",
+    "validacao_resultado", "validacao_detalhe",
 ]
 
 
@@ -302,6 +303,90 @@ def build_prompt(scenario: dict, tf_code: str, exec_log: str) -> str:
     """).strip()
 
 
+import tempfile as _tempfile
+
+
+def extract_code_from_ai(ai_response: str) -> str | None:
+    """Extract the suggested Terraform code block from the AI response.
+    
+    Looks for the code block under 'TRECHO DE CÓDIGO SUGERIDO' section,
+    then falls back to any fenced code block containing HCL-like content.
+    """
+    if not ai_response:
+        return None
+
+    # Strategy 1: find code block after "TRECHO DE CÓDIGO SUGERIDO"
+    pattern = r"(?:TRECHO DE CÓDIGO SUGERIDO|CÓDIGO SUGERIDO).*?```(?:\w*)\n(.*?)```"
+    match = re.search(pattern, ai_response, re.DOTALL | re.IGNORECASE)
+    if match:
+        code = match.group(1).strip()
+        if code and ("resource" in code or "terraform" in code or "locals" in code
+                      or "variable" in code or "provider" in code or "docker" in code):
+            return code
+
+    # Strategy 2: find the largest HCL code block in the response
+    blocks = re.findall(r"```(?:hcl|terraform|tf)?\n(.*?)```", ai_response, re.DOTALL)
+    if blocks:
+        # Return the longest block that looks like valid HCL
+        hcl_blocks = [b.strip() for b in blocks
+                      if any(kw in b for kw in ("resource", "terraform", "locals", "variable", "provider", "docker"))]
+        if hcl_blocks:
+            return max(hcl_blocks, key=len)
+
+    return None
+
+
+def validate_ai_suggestion(scenario: dict, ai_response: str) -> tuple[str, str]:
+    """Validate the AI's suggested code by running terraform init+validate on it.
+    
+    Returns (result, detail) where result is one of:
+    - 'aprovado'       : terraform validate passed on the suggested code
+    - 'reprovado'      : terraform validate failed (AI suggestion has errors)
+    - 'parcial'        : init passed but validate failed (partial fix)
+    - 'sem_codigo'     : no code block could be extracted from AI response
+    - 'erro_validacao' : unexpected error during validation process
+    """
+    code = extract_code_from_ai(ai_response)
+    if not code:
+        return ("sem_codigo", "Nenhum bloco de codigo extraido da resposta da IA")
+
+    # Create a temporary directory with the suggested code
+    try:
+        with _tempfile.TemporaryDirectory(prefix="aiops_val_") as tmpdir:
+            main_tf = Path(tmpdir) / "main.tf"
+            main_tf.write_text(code, encoding="utf-8")
+
+            env = os.environ.copy()
+            env["TF_IN_AUTOMATION"] = "1"
+
+            # Step 1: terraform init
+            init_result = subprocess.run(
+                ["terraform", "init", "-input=false", "-no-color", "-backend=false"],
+                cwd=tmpdir, capture_output=True, text=True,
+                env=env, check=False, timeout=30,
+            )
+            if init_result.returncode != 0:
+                err = (init_result.stderr or init_result.stdout or "").strip()[:200]
+                return ("reprovado", f"init falhou: {err}")
+
+            # Step 2: terraform validate
+            val_result = subprocess.run(
+                ["terraform", "validate", "-no-color"],
+                cwd=tmpdir, capture_output=True, text=True,
+                env=env, check=False, timeout=15,
+            )
+            if val_result.returncode == 0:
+                return ("aprovado", "Codigo sugerido pela IA passou em terraform validate")
+            else:
+                err = (val_result.stderr or val_result.stdout or "").strip()[:200]
+                return ("parcial", f"validate falhou: {err}")
+
+    except subprocess.TimeoutExpired:
+        return ("erro_validacao", "Timeout durante validacao do codigo sugerido")
+    except Exception as exc:
+        return ("erro_validacao", f"Erro inesperado: {exc}")
+
+
 def call_ollama_stream(prompt: str, model: str, url: str, timeout: int):
     """Generator that yields tokens as they arrive from Ollama."""
     payload = json.dumps({
@@ -391,7 +476,9 @@ CREATE TABLE IF NOT EXISTS tcc_resultados (
     tempo_ia_s REAL,
     tokens_estimados INTEGER,
     ia_executada TEXT,
-    relatorio_path TEXT
+    relatorio_path TEXT,
+    validacao_resultado TEXT,
+    validacao_detalhe TEXT
 );
 """
 
@@ -661,14 +748,31 @@ def execute_scenario(
         log_container.info("ℹ️ IA ignorada (modo --skip-llm)")
         add_activity("⏭️", f"[{scenario['slug']}] IA ignorada (skip-llm)")
 
+    # --- Automatic validation of AI-suggested code ---
+    validacao_resultado = ""
+    validacao_detalhe = ""
+    if ai_response:
+        log_container.write("Validando codigo sugerido pela IA...")
+        add_activity("VAL", f"[{scenario['slug']}] Validando sugestao da IA")
+        validacao_resultado, validacao_detalhe = validate_ai_suggestion(scenario, ai_response)
+        if validacao_resultado == "aprovado":
+            log_container.success(f"Validacao: APROVADO — {validacao_detalhe}")
+            add_activity("VAL", f"[{scenario['slug']}] Validacao: APROVADO")
+        elif validacao_resultado == "sem_codigo":
+            log_container.warning(f"Validacao: SEM CODIGO — {validacao_detalhe}")
+            add_activity("VAL", f"[{scenario['slug']}] Validacao: sem codigo extraido")
+        else:
+            log_container.error(f"Validacao: {validacao_resultado.upper()} — {validacao_detalhe}")
+            add_activity("VAL", f"[{scenario['slug']}] Validacao: {validacao_resultado}")
+
     report_path = save_report(scenario, status_str, scenario["tf_code"], exec_log, ai_response)
-    log_container.info(f"📄 Relatório: `{report_path.relative_to(ROOT)}`")
-    add_activity("📄", f"[{scenario['slug']}] Relatório salvo: {report_path.name}")
+    log_container.info(f"Relatorio: `{report_path.relative_to(ROOT)}`")
+    add_activity("REL", f"[{scenario['slug']}] Relatorio salvo: {report_path.name}")
 
     # Cleanup Docker resources
     if uses_docker:
-        log_container.write("🧹 Limpando recursos Docker...")
-        add_activity("🧹", f"[{scenario['slug']}] Limpando recursos Docker")
+        log_container.write("Limpando recursos Docker...")
+        add_activity("CLN", f"[{scenario['slug']}] Limpando recursos Docker")
         cleanup_msg = terraform_cleanup(scenario["path"])
         log_container.write(cleanup_msg)
 
@@ -685,6 +789,8 @@ def execute_scenario(
         "tokens_estimados": tokens_est,
         "ia_executada": "sim" if ai_response else "nao",
         "relatorio_path": str(report_path.relative_to(ROOT)),
+        "validacao_resultado": validacao_resultado,
+        "validacao_detalhe": validacao_detalhe,
     }
     append_csv_result(csv_row)
     if pg_dsn:
@@ -1073,10 +1179,10 @@ def render_results_tab():
     all_rows = data
 
     # --- Metrics row ---
-    st.markdown("### Métricas Gerais")
+    st.markdown("### Metricas Gerais")
     m1, m2, m3, m4, m5, m6 = st.columns(6)
     with m1:
-        st.metric("Total execuções", len(all_rows))
+        st.metric("Total execucoes", len(all_rows))
     with m2:
         st.metric("Com IA", len(ai_rows))
     with m3:
@@ -1084,19 +1190,55 @@ def render_results_tab():
         st.metric("Modelos", len(models_used))
     with m4:
         scenarios_used = set(r["cenario"] for r in ai_rows)
-        st.metric("Cenários", len(scenarios_used))
+        st.metric("Cenarios", len(scenarios_used))
     with m5:
         if ai_rows:
             avg_ai = mean([float(r["tempo_ia_s"]) for r in ai_rows])
-            st.metric("Média IA (s)", f"{avg_ai:.1f}")
+            st.metric("Media IA (s)", f"{avg_ai:.1f}")
         else:
-            st.metric("Média IA (s)", "N/A")
+            st.metric("Media IA (s)", "N/A")
     with m6:
         if ai_rows:
             avg_tok = mean([int(r["tokens_estimados"]) for r in ai_rows])
-            st.metric("Média tokens", f"{avg_tok:.0f}")
+            st.metric("Media tokens", f"{avg_tok:.0f}")
         else:
-            st.metric("Média tokens", "N/A")
+            st.metric("Media tokens", "N/A")
+
+    # --- Validation metrics ---
+    validated_rows = [r for r in ai_rows if r.get("validacao_resultado")]
+    if validated_rows:
+        st.markdown("### Validacao Automatica")
+        v1, v2, v3, v4 = st.columns(4)
+        approved = sum(1 for r in validated_rows if r["validacao_resultado"] == "aprovado")
+        failed = sum(1 for r in validated_rows if r["validacao_resultado"] in ("reprovado", "parcial"))
+        no_code = sum(1 for r in validated_rows if r["validacao_resultado"] == "sem_codigo")
+        errors = sum(1 for r in validated_rows if r["validacao_resultado"] == "erro_validacao")
+        with v1:
+            pct = (approved / len(validated_rows) * 100) if validated_rows else 0
+            st.metric("Aprovados", f"{approved} ({pct:.0f}%)")
+        with v2:
+            st.metric("Reprovados/Parcial", str(failed))
+        with v3:
+            st.metric("Sem codigo", str(no_code))
+        with v4:
+            st.metric("Erros validacao", str(errors))
+
+        # Per-model validation table
+        if len(models_used) > 1:
+            st.markdown("#### Taxa de aprovacao por modelo")
+            model_val = {}
+            for r in validated_rows:
+                m = r["modelo"]
+                if m not in model_val:
+                    model_val[m] = {"total": 0, "aprovado": 0}
+                model_val[m]["total"] += 1
+                if r["validacao_resultado"] == "aprovado":
+                    model_val[m]["aprovado"] += 1
+            val_table = []
+            for m, v in sorted(model_val.items()):
+                pct = (v["aprovado"] / v["total"] * 100) if v["total"] else 0
+                val_table.append({"Modelo": m, "Total": v["total"], "Aprovados": v["aprovado"], "Taxa (%)": f"{pct:.1f}"})
+            st.table(val_table)
 
     if not ai_rows or not HAS_PLOTLY:
         st.warning("Sem dados com IA ou Plotly não disponível.")
