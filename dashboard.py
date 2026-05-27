@@ -245,26 +245,49 @@ def save_hardware_catalog(catalog: dict) -> None:
     HARDWARE_FILE.write_text(json.dumps(catalog, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
+def _auto_label(detected: dict) -> str:
+    """Generate a human-readable label from hostname + short CPU name."""
+    import socket
+    hostname = socket.gethostname() or "machine"
+    cpu = detected.get("cpu", "")
+    # Extract short CPU name: e.g. "Intel Core i7-13620H" -> "i7-13620H"
+    import re as _re
+    m = _re.search(r"(i[3579]-\w+|Ryzen\s+\w+\s+\w+|Core Ultra \d+ \w+|M[123]\s*\w*|Xeon\s+\w+)", cpu, _re.I)
+    short_cpu = m.group(0).strip() if m else cpu.split()[-1]
+    return f"{hostname} ({short_cpu})"
+
+
 def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
     """Find an existing catalog entry matching the detected hardware, or create one.
     
+    Matches by CPU + OS fingerprint. Auto-creates with a descriptive label
+    (hostname + CPU model) and full hardware details if no match found.
     Returns the machine id (hw_id).
     """
-    # Match by CPU + OS
+    import datetime
+    # Match by CPU + OS fingerprint
     for hw_id, entry in catalog["machines"].items():
         if entry.get("cpu") == detected["cpu"] and entry.get("os") == detected["os"]:
+            # Update compute_unit and gpu in case hardware changed
+            entry["compute_unit"] = detected.get("compute_unit", entry.get("compute_unit", "cpu"))
+            if detected.get("gpu"):
+                entry["gpu"] = detected["gpu"]
+            save_hardware_catalog(catalog)
             return hw_id
-    # Create a new auto entry
+    # Create a new auto entry with descriptive label
     idx = len(catalog["machines"]) + 1
     hw_id = f"machine-{idx:02d}"
+    label = _auto_label(detected)
     catalog["machines"][hw_id] = {
-        "label": hw_id,
+        "label": label,
         "cpu": detected["cpu"],
-        "gpu": detected["gpu"],
-        "npu": detected["npu"],
+        "gpu": detected.get("gpu", ""),
+        "npu": detected.get("npu", ""),
         "ram_gb": detected["ram_gb"],
         "os": detected["os"],
-        "notes": "Auto-detectado",
+        "compute_unit": detected.get("compute_unit", "cpu"),
+        "notes": "Auto-detectado na inicialização",
+        "registered_at": datetime.datetime.now().isoformat(),
     }
     save_hardware_catalog(catalog)
     return hw_id
@@ -1143,7 +1166,8 @@ def render_sidebar(hw_snapshot: dict | None = None):
             st.header("💻 Hardware Detectado")
             cu = hw_snapshot.get("compute_unit", "cpu").upper()
             badge_color = {"NPU": "🟣", "GPU": "🟢", "CPU": "🔵"}.get(cu, "⚪")
-            st.markdown(f"{badge_color} **Compute:** {cu} | **ID:** `{hw_snapshot.get('hw_id','?')}`")
+            label_disp = hw_snapshot.get("label", hw_snapshot.get("hw_id", "?"))
+            st.markdown(f"{badge_color} **Compute:** {cu} | **{label_disp}** (`{hw_snapshot.get('hw_id','?')}`)")
             st.caption(f"**CPU:** {hw_snapshot.get('cpu','?')[:40]}")
             if hw_snapshot.get("gpu"):
                 st.caption(f"**GPU:** {hw_snapshot['gpu'][:40]}")
@@ -2202,8 +2226,9 @@ def render_hardware_tab():
     if hw_snapshot:
         cu = hw_snapshot.get("compute_unit", "cpu").upper()
         badge = {"NPU": "🟣", "GPU": "🟢", "CPU": "🔵"}.get(cu, "⚪")
+        label_disp = hw_snapshot.get("label", hw_snapshot.get("hw_id", "?"))
         st.info(
-            f"{badge} **Máquina atual:** `{hw_snapshot.get('hw_id','?')}` — "
+            f"{badge} **{label_disp}** (`{hw_snapshot.get('hw_id','?')}`) — "
             f"Compute: **{cu}** | CPU: {hw_snapshot.get('cpu','?')[:50]} | "
             f"RAM: {hw_snapshot.get('ram_gb','?')} GB | OS: {hw_snapshot.get('os','?')[:30]}",
             icon="💻",
