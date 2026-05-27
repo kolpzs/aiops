@@ -346,6 +346,8 @@ def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
     Returns the machine id (hw_id).
     """
     import datetime
+    import socket as _socket
+    hostname = _socket.gethostname()
     # Match by CPU + OS fingerprint
     for hw_id, entry in catalog["machines"].items():
         if entry.get("cpu") == detected["cpu"] and entry.get("os") == detected["os"]:
@@ -361,6 +363,10 @@ def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
             if detected.get("npu") and entry.get("npu") != detected.get("npu"):
                 entry["npu"] = detected["npu"]
                 changed = True
+            # Store hostname for fast cache lookup on reconnect
+            if not entry.get("hostname"):
+                entry["hostname"] = hostname
+                changed = True
             if changed:
                 save_hardware_catalog(catalog)
             return hw_id
@@ -370,6 +376,7 @@ def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
     label = _auto_label(detected)
     catalog["machines"][hw_id] = {
         "label": label,
+        "hostname": hostname,
         "cpu": detected["cpu"],
         "gpu": detected.get("gpu", ""),
         "npu": detected.get("npu", ""),
@@ -2425,24 +2432,54 @@ def main():
         st.session_state["_dashboard_loaded"] = True
 
     # --- Hardware detection (once per session) ---
+    # On WebSocket reconnect (after long automation), session_state is cleared.
+    # We check hardware.json by hostname first to avoid re-running WMI/PowerShell,
+    # which can hang and crash the Streamlit server.
     if "hw_snapshot" not in st.session_state:
-        try:
-            detected = detect_hardware_snapshot()
-            catalog = load_hardware_catalog()
-            hw_id = get_or_create_hw_entry(catalog, detected)
-            detected["hw_id"] = hw_id
-            detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+        import socket as _socket
+        hostname = _socket.gethostname()
+        catalog = load_hardware_catalog()
+
+        # Fast path: find cached entry by hostname (skips all WMI queries)
+        cached_id, cached_entry = None, None
+        for _hw_id, _entry in catalog["machines"].items():
+            if (_entry.get("hostname") == hostname or
+                    _entry.get("label", "").startswith(hostname + " ")):
+                cached_id, cached_entry = _hw_id, _entry
+                break
+
+        if cached_entry:
+            detected = {
+                "cpu": cached_entry.get("cpu", "Unknown"),
+                "gpu": cached_entry.get("gpu", ""),
+                "npu": cached_entry.get("npu", ""),
+                "ram_gb": cached_entry.get("ram_gb", 0),
+                "os": cached_entry.get("os", "Unknown"),
+                "compute_unit": cached_entry.get("compute_unit", "CPU"),
+                "hw_id": cached_id,
+                "label": cached_entry.get("label", cached_id),
+            }
             st.session_state["hw_snapshot"] = detected
             st.session_state["hw_catalog"] = catalog
-            add_activity("💻", f"Hardware detectado: {detected.get('label','?')}")
-        except Exception as _hw_err:
-            st.session_state["hw_snapshot"] = {
-                "cpu": "Unknown", "gpu": "", "npu": "", "ram_gb": 0,
-                "os": "Unknown", "compute_unit": "CPU", "hw_id": "unknown",
-                "label": "unknown",
-            }
-            st.session_state["hw_catalog"] = {"machines": {}}
-            add_activity("⚠️", f"Falha na detecção de hardware: {_hw_err}")
+            add_activity("💻", f"Hardware carregado: {detected.get('label','?')}")
+        else:
+            # Slow path: run full hardware detection (WMI/PowerShell) for new machines
+            try:
+                detected = detect_hardware_snapshot()
+                hw_id = get_or_create_hw_entry(catalog, detected)
+                detected["hw_id"] = hw_id
+                detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+                st.session_state["hw_snapshot"] = detected
+                st.session_state["hw_catalog"] = catalog
+                add_activity("💻", f"Hardware detectado: {detected.get('label','?')}")
+            except Exception as _hw_err:
+                st.session_state["hw_snapshot"] = {
+                    "cpu": "Unknown", "gpu": "", "npu": "", "ram_gb": 0,
+                    "os": "Unknown", "compute_unit": "CPU", "hw_id": "unknown",
+                    "label": "unknown",
+                }
+                st.session_state["hw_catalog"] = {"machines": {}}
+                add_activity("⚠️", f"Falha na detecção de hardware: {_hw_err}")
 
     hw_snapshot = st.session_state["hw_snapshot"]
 
