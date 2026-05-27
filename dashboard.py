@@ -87,7 +87,208 @@ CSV_HEADERS = [
     "etapa_falha", "status", "tempo_terraform_s", "tempo_ia_s",
     "tokens_estimados", "ia_executada", "relatorio_path",
     "validacao_resultado", "validacao_detalhe",
+    "hw_id", "compute_unit", "hw_cpu", "hw_gpu", "hw_npu", "hw_ram_gb", "hw_os",
 ]
+
+HARDWARE_FILE = ROOT / "hardware.json"
+
+
+# ---------------------------------------------------------------------------
+# Hardware detection and catalog
+# ---------------------------------------------------------------------------
+
+def _run_cmd(args: list[str], timeout: int = 5) -> str:
+    """Run a shell command and return stdout, empty string on failure."""
+    try:
+        r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+        return r.stdout.strip() if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def detect_cpu() -> str:
+    """Return CPU model name string."""
+    import platform
+    # Linux: lscpu
+    out = _run_cmd(["lscpu"])
+    for line in out.splitlines():
+        if "Model name" in line:
+            return line.split(":", 1)[1].strip()
+    # macOS
+    out2 = _run_cmd(["sysctl", "-n", "machdep.cpu.brand_string"])
+    if out2:
+        return out2
+    return platform.processor() or "Unknown CPU"
+
+
+def detect_gpu() -> str | None:
+    """Return GPU name string, or None if not found."""
+    # NVIDIA
+    out = _run_cmd(["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"])
+    if out:
+        return out.splitlines()[0].strip()
+    # AMD via rocm-smi
+    out2 = _run_cmd(["rocm-smi", "--showproductname"])
+    if out2:
+        for line in out2.splitlines():
+            if "Card" in line or "GPU" in line:
+                return line.strip()
+    # macOS Metal
+    out3 = _run_cmd(["system_profiler", "SPDisplaysDataType"])
+    if out3:
+        for line in out3.splitlines():
+            if "Chipset Model" in line:
+                return line.split(":", 1)[1].strip()
+    return None
+
+
+def detect_npu() -> str | None:
+    """Return NPU description if found, else None.
+    
+    Checks for:
+    - Intel NPU (Meteor Lake / Core Ultra)  via /dev/accel
+    - AMD Ryzen AI NPU via xdna driver
+    - Qualcomm NPU via /dev/qaic
+    """
+    import os
+    # Intel NPU (accel driver, kernel 6.7+)
+    accel_dir = "/dev/accel"
+    if os.path.isdir(accel_dir) and os.listdir(accel_dir):
+        cpu = detect_cpu()
+        return f"Intel NPU ({cpu})"
+    # AMD Ryzen AI
+    xdna = _run_cmd(["dmesg"])
+    if "xdna" in xdna.lower() or "ryzen ai" in xdna.lower():
+        return "AMD Ryzen AI NPU"
+    # Qualcomm
+    if os.path.exists("/dev/qaic0"):
+        return "Qualcomm Cloud AI"
+    return None
+
+
+def detect_ram_gb() -> int:
+    """Return total RAM in GB."""
+    try:
+        with open("/proc/meminfo") as f:
+            for line in f:
+                if line.startswith("MemTotal"):
+                    kb = int(line.split()[1])
+                    return round(kb / 1024 / 1024)
+    except Exception:
+        pass
+    out = _run_cmd(["sysctl", "-n", "hw.memsize"])  # macOS
+    if out:
+        return round(int(out) / 1024 ** 3)
+    return 0
+
+
+def detect_os() -> str:
+    """Return OS description string."""
+    import platform
+    sys = platform.system()
+    if sys == "Linux":
+        try:
+            with open("/etc/os-release") as f:
+                info = dict(line.strip().split("=", 1) for line in f if "=" in line)
+            name = info.get("PRETTY_NAME", "").strip('"')
+            if name:
+                return name
+        except Exception:
+            pass
+    elif sys == "Darwin":
+        ver = _run_cmd(["sw_vers", "-productVersion"])
+        return f"macOS {ver}" if ver else "macOS"
+    elif sys == "Windows":
+        return f"Windows {platform.version()}"
+    return platform.platform()
+
+
+def detect_compute_unit(npu: str | None, gpu: str | None) -> str:
+    """Return 'NPU', 'GPU', or 'CPU' based on available hardware."""
+    if npu:
+        return "NPU"
+    if gpu:
+        return "GPU"
+    return "CPU"
+
+
+def detect_hardware_snapshot() -> dict:
+    """Auto-detect full hardware profile of the current machine."""
+    cpu = detect_cpu()
+    gpu = detect_gpu()
+    npu = detect_npu()
+    ram = detect_ram_gb()
+    os_name = detect_os()
+    unit = detect_compute_unit(npu, gpu)
+    return {
+        "cpu": cpu,
+        "gpu": gpu or "",
+        "npu": npu or "",
+        "ram_gb": ram,
+        "os": os_name,
+        "compute_unit": unit,
+    }
+
+
+def load_hardware_catalog() -> dict:
+    """Load the hardware catalog JSON (creates empty if not found)."""
+    if HARDWARE_FILE.exists():
+        try:
+            return json.loads(HARDWARE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"machines": {}}
+
+
+def save_hardware_catalog(catalog: dict) -> None:
+    """Persist the hardware catalog JSON."""
+    HARDWARE_FILE.write_text(json.dumps(catalog, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
+    """Find an existing catalog entry matching the detected hardware, or create one.
+    
+    Returns the machine id (hw_id).
+    """
+    # Match by CPU + OS
+    for hw_id, entry in catalog["machines"].items():
+        if entry.get("cpu") == detected["cpu"] and entry.get("os") == detected["os"]:
+            return hw_id
+    # Create a new auto entry
+    idx = len(catalog["machines"]) + 1
+    hw_id = f"machine-{idx:02d}"
+    catalog["machines"][hw_id] = {
+        "label": hw_id,
+        "cpu": detected["cpu"],
+        "gpu": detected["gpu"],
+        "npu": detected["npu"],
+        "ram_gb": detected["ram_gb"],
+        "os": detected["os"],
+        "notes": "Auto-detectado",
+    }
+    save_hardware_catalog(catalog)
+    return hw_id
+
+
+def build_ollama_env(compute_unit: str) -> dict:
+    """Return os.environ copy with Ollama GPU settings for the desired compute unit.
+    
+    - GPU  → default (CUDA/ROCm/Metal auto, all layers on GPU)
+    - CPU  → OLLAMA_NUM_GPU=0 (forces CPU-only inference)
+    - NPU  → Ollama does not natively support NPU yet; falls back to GPU if present,
+             otherwise CPU. Sets OLLAMA_NPU_HINT=1 as informational marker.
+    """
+    env = os.environ.copy()
+    if compute_unit == "CPU":
+        env["OLLAMA_NUM_GPU"] = "0"
+    elif compute_unit == "NPU":
+        # NPU not yet natively supported by Ollama — use GPU if available
+        env.pop("OLLAMA_NUM_GPU", None)
+        env["OLLAMA_NPU_HINT"] = "1"
+    else:
+        # GPU — remove any forced CPU setting, let Ollama auto-detect
+        env.pop("OLLAMA_NUM_GPU", None)
+    return env
 
 
 # ---------------------------------------------------------------------------
@@ -478,7 +679,14 @@ CREATE TABLE IF NOT EXISTS tcc_resultados (
     ia_executada TEXT,
     relatorio_path TEXT,
     validacao_resultado TEXT,
-    validacao_detalhe TEXT
+    validacao_detalhe TEXT,
+    hw_id TEXT,
+    compute_unit TEXT,
+    hw_cpu TEXT,
+    hw_gpu TEXT,
+    hw_npu TEXT,
+    hw_ram_gb INTEGER,
+    hw_os TEXT
 );
 """
 
@@ -576,6 +784,7 @@ def execute_scenario(
     log_container,
     progress_text=None,
     pg_dsn: str = "",
+    hw_snapshot: dict | None = None,
 ) -> dict:
     """
     Run a single scenario end-to-end. Writes live output to log_container.
@@ -776,6 +985,7 @@ def execute_scenario(
         cleanup_msg = terraform_cleanup(scenario["path"])
         log_container.write(cleanup_msg)
 
+    hw = hw_snapshot or {}
     csv_row = {
         "timestamp": datetime.now().isoformat(timespec="seconds"),
         "cenario": scenario["slug"],
@@ -791,6 +1001,13 @@ def execute_scenario(
         "relatorio_path": str(report_path.relative_to(ROOT)),
         "validacao_resultado": validacao_resultado,
         "validacao_detalhe": validacao_detalhe,
+        "hw_id": hw.get("hw_id", ""),
+        "compute_unit": hw.get("compute_unit", ""),
+        "hw_cpu": hw.get("cpu", ""),
+        "hw_gpu": hw.get("gpu", ""),
+        "hw_npu": hw.get("npu", ""),
+        "hw_ram_gb": hw.get("ram_gb", ""),
+        "hw_os": hw.get("os", ""),
     }
     append_csv_result(csv_row)
     if pg_dsn:
@@ -827,7 +1044,7 @@ CUSTOM_CSS = """
 # ---------------------------------------------------------------------------
 # UI: Sidebar
 # ---------------------------------------------------------------------------
-def render_sidebar():
+def render_sidebar(hw_snapshot: dict | None = None):
     with st.sidebar:
         st.header("⚙️ Configuração")
         ollama_url = st.text_input("URL do Ollama", value="http://127.0.0.1:11434/api/generate")
@@ -920,13 +1137,29 @@ def render_sidebar():
         else:
             pg_ok = False
 
+        # Hardware badge in sidebar
+        if hw_snapshot:
+            st.divider()
+            st.header("💻 Hardware Detectado")
+            cu = hw_snapshot.get("compute_unit", "cpu").upper()
+            badge_color = {"NPU": "🟣", "GPU": "🟢", "CPU": "🔵"}.get(cu, "⚪")
+            st.markdown(f"{badge_color} **Compute:** {cu} | **ID:** `{hw_snapshot.get('hw_id','?')}`")
+            st.caption(f"**CPU:** {hw_snapshot.get('cpu','?')[:40]}")
+            if hw_snapshot.get("gpu"):
+                st.caption(f"**GPU:** {hw_snapshot['gpu'][:40]}")
+            if hw_snapshot.get("npu"):
+                st.caption(f"**NPU:** {hw_snapshot['npu'][:40]}")
+            st.caption(f"**RAM:** {hw_snapshot.get('ram_gb','?')} GB | **OS:** {hw_snapshot.get('os','?')[:30]}")
+            if cu == "GPU":
+                st.info("Para forçar CPU: reinicie Ollama com `OLLAMA_NUM_GPU=0`", icon="ℹ️")
+
     return ollama_url, model, timeout, is_online, pg_dsn
 
 
 # ---------------------------------------------------------------------------
 # UI: Tab - Individual scenario
 # ---------------------------------------------------------------------------
-def render_scenario_tab(scenario: dict, model: str, ollama_url: str, timeout: int):
+def render_scenario_tab(scenario: dict, model: str, ollama_url: str, timeout: int, hw_snapshot: dict | None = None):
     st.subheader(f"📋 {scenario['title']}")
 
     c1, c2 = st.columns([3, 2])
@@ -952,13 +1185,13 @@ def render_scenario_tab(scenario: dict, model: str, ollama_url: str, timeout: in
     if run_btn:
         log_area = st.container()
         with log_area:
-            execute_scenario(scenario, model, ollama_url, timeout, skip_llm, st)
+            execute_scenario(scenario, model, ollama_url, timeout, skip_llm, st, hw_snapshot=hw_snapshot)
 
 
 # ---------------------------------------------------------------------------
 # UI: Tab - Run All
 # ---------------------------------------------------------------------------
-def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeout: int, pg_dsn: str = ""):
+def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeout: int, pg_dsn: str = "", hw_snapshot: dict | None = None):
     st.subheader("🚀 Executar todos os cenários")
     st.markdown("Executa todos os cenários em sequência, mostrando progresso em tempo real.")
 
@@ -1018,7 +1251,7 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
 
                 with st.expander(f"📁 {scenario['slug']} — {scenario['title']}", expanded=True):
                     result = execute_scenario(
-                        scenario, model, ollama_url, timeout, skip_llm, st, pg_dsn=pg_dsn,
+                        scenario, model, ollama_url, timeout, skip_llm, st, pg_dsn=pg_dsn, hw_snapshot=hw_snapshot,
                     )
                     results.append(result)
 
@@ -1741,7 +1974,7 @@ def render_results_tab():
 # ---------------------------------------------------------------------------
 # UI: Tab - Automation (overnight batch run)
 # ---------------------------------------------------------------------------
-def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, pg_dsn: str = ""):
+def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, pg_dsn: str = "", hw_snapshot: dict | None = None):
     st.subheader("🤖 Automação")
     st.markdown(
         "Roda **todos os cenários** com **todos os modelos instalados** N vezes cada, "
@@ -1899,6 +2132,7 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
                             skip_llm=False,
                             log_container=st,
                             pg_dsn=pg_dsn,
+                            hw_snapshot=hw_snapshot,
                         )
 
                 runs_done += 1
@@ -1956,6 +2190,86 @@ def render_reports_tab():
 
 
 # ---------------------------------------------------------------------------
+# UI: Tab - Hardware
+# ---------------------------------------------------------------------------
+def render_hardware_tab():
+    st.subheader("💻 Hardware Registrado")
+
+    hw_snapshot = st.session_state.get("hw_snapshot", {})
+    catalog = st.session_state.get("hw_catalog", load_hardware_catalog())
+
+    # Current machine banner
+    if hw_snapshot:
+        cu = hw_snapshot.get("compute_unit", "cpu").upper()
+        badge = {"NPU": "🟣", "GPU": "🟢", "CPU": "🔵"}.get(cu, "⚪")
+        st.info(
+            f"{badge} **Máquina atual:** `{hw_snapshot.get('hw_id','?')}` — "
+            f"Compute: **{cu}** | CPU: {hw_snapshot.get('cpu','?')[:50]} | "
+            f"RAM: {hw_snapshot.get('ram_gb','?')} GB | OS: {hw_snapshot.get('os','?')[:30]}",
+            icon="💻",
+        )
+
+    # Catalog table
+    machines = catalog.get("machines", {})
+    if machines:
+        st.markdown("### Catálogo de Máquinas")
+        rows = []
+        for hw_id, m in machines.items():
+            rows.append({
+                "ID": hw_id,
+                "Label": m.get("label", hw_id),
+                "CPU": m.get("cpu", "?")[:50],
+                "GPU": m.get("gpu", "—"),
+                "NPU": m.get("npu", "—") or "—",
+                "RAM (GB)": m.get("ram_gb", "?"),
+                "OS": m.get("os", "?")[:30],
+                "Compute": m.get("compute_unit", "cpu").upper(),
+                "Registrada em": m.get("registered_at", "?")[:10],
+            })
+        st.dataframe(rows, use_container_width=True)
+    else:
+        st.caption("Nenhuma máquina registrada ainda.")
+
+    st.divider()
+    st.markdown("### Registrar nova máquina manualmente")
+    with st.form("form_hw"):
+        c1, c2 = st.columns(2)
+        with c1:
+            new_label = st.text_input("Label (ex: notebook-pessoal)", placeholder="notebook-pessoal")
+            new_cpu = st.text_input("CPU", placeholder="Intel Core i7-13620H")
+            new_gpu = st.text_input("GPU (opcional)", placeholder="NVIDIA RTX 4050 6GB")
+            new_npu = st.text_input("NPU (opcional)", placeholder="Intel AI Boost")
+        with c2:
+            new_ram = st.number_input("RAM (GB)", min_value=1, max_value=1024, value=16)
+            new_os = st.text_input("Sistema Operacional", placeholder="Ubuntu 24.04")
+            new_compute = st.selectbox("Compute padrão", ["gpu", "cpu", "npu"])
+            new_notes = st.text_area("Notas (opcional)", placeholder="Uso em casa, kernel 6.17")
+
+        submitted = st.form_submit_button("✅ Registrar", type="primary")
+        if submitted and new_label and new_cpu:
+            import datetime
+            new_id = new_label.lower().replace(" ", "-")
+            catalog.setdefault("machines", {})[new_id] = {
+                "label": new_label,
+                "cpu": new_cpu,
+                "gpu": new_gpu,
+                "npu": new_npu,
+                "ram_gb": int(new_ram),
+                "os": new_os,
+                "compute_unit": new_compute,
+                "notes": new_notes,
+                "registered_at": datetime.datetime.now().isoformat(),
+            }
+            save_hardware_catalog(catalog)
+            st.session_state["hw_catalog"] = catalog
+            st.success(f"✅ Máquina `{new_id}` registrada!")
+            add_activity("💻", f"Máquina '{new_id}' registrada no catálogo")
+            st.rerun()
+        elif submitted:
+            st.warning("Label e CPU são obrigatórios.")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 def main():
@@ -1969,7 +2283,20 @@ def main():
     _init_activity_log()
     add_activity("🔬", "Dashboard carregado") if not st.session_state.activity_log else None
 
-    ollama_url, model, timeout, is_online, pg_dsn = render_sidebar()
+    # --- Hardware detection (once per session) ---
+    if "hw_snapshot" not in st.session_state:
+        with st.spinner("Detectando hardware..."):
+            detected = detect_hardware_snapshot()
+            catalog = load_hardware_catalog()
+            hw_id = get_or_create_hw_entry(catalog, detected)
+            detected["hw_id"] = hw_id
+            detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+        st.session_state["hw_snapshot"] = detected
+        st.session_state["hw_catalog"] = catalog
+
+    hw_snapshot = st.session_state["hw_snapshot"]
+
+    ollama_url, model, timeout, is_online, pg_dsn = render_sidebar(hw_snapshot)
 
     st.title("🔬 Análise Estruturada de Logs em IaC com IA Generativa")
     st.caption("MVP do TCC — Laboratório de Falhas Controladas com Terraform + Ollama")
@@ -1990,21 +2317,22 @@ def main():
     tab_names.append("📊 Resultados")
     tab_names.append("📂 Relatórios")
     tab_names.append("📋 Log de Atividades")
+    tab_names.append("💻 Hardware")
 
     tabs = st.tabs(tab_names)
 
     # Individual scenario tabs
     for i, scenario in enumerate(scenarios):
         with tabs[i]:
-            render_scenario_tab(scenario, model, ollama_url, timeout)
+            render_scenario_tab(scenario, model, ollama_url, timeout, hw_snapshot)
 
     # Run All tab
     with tabs[len(scenarios)]:
-        render_run_all_tab(scenarios, model, ollama_url, timeout, pg_dsn=pg_dsn)
+        render_run_all_tab(scenarios, model, ollama_url, timeout, pg_dsn=pg_dsn, hw_snapshot=hw_snapshot)
 
     # Automation tab
     with tabs[len(scenarios) + 1]:
-        render_automation_tab(scenarios, ollama_url, timeout, pg_dsn=pg_dsn)
+        render_automation_tab(scenarios, ollama_url, timeout, pg_dsn=pg_dsn, hw_snapshot=hw_snapshot)
 
     # Results tab
     with tabs[len(scenarios) + 2]:
@@ -2017,6 +2345,10 @@ def main():
     # Activity Log tab
     with tabs[len(scenarios) + 4]:
         render_activity_log_tab()
+
+    # Hardware tab
+    with tabs[len(scenarios) + 5]:
+        render_hardware_tab()
 
     # Footer
     st.divider()
