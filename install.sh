@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 # ============================================================
 # TCC MVP - Script de Instalação e Verificação (Linux/macOS)
-# Uso: bash install.sh
+# Uso: bash install.sh           (só verifica dependências)
+#      bash install.sh --launch  (verifica e inicia o dashboard)
 # ============================================================
 
 set -euo pipefail
+LAUNCH=false
+for arg in "$@"; do
+  case "$arg" in --launch) LAUNCH=true ;; esac
+done
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 
 ok()   { echo -e "  ${GREEN}[OK]${NC} $*"; }
@@ -143,3 +148,8 @@ echo ""
 echo "Para iniciar o dashboard:"
 echo -e "  ${GREEN}streamlit run dashboard.py${NC}"
 echo ""
+
+if [ "$LAUNCH" = true ]; then
+    echo -e "${CYAN}Iniciando dashboard...${NC}"
+    streamlit run dashboard.py
+fi

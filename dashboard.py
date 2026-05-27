@@ -2118,6 +2118,17 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
         "coletando dados em massa para análise estatística do TCC."
     )
 
+    # Show completion banner from previous run (stored before st.rerun() to avoid WS overflow)
+    _last = st.session_state.pop("auto_last_result", None)
+    if _last:
+        if _last.get("completed"):
+            st.success(
+                f"🎉 Automação concluída! {_last['total_exec']:,} execuções com "
+                f"{_last['models_count']} modelo(s) × {_last['iterations']} iterações."
+            )
+        else:
+            st.warning(f"⏹️ Automação interrompida após {_last.get('total_exec', 0):,} execuções.")
+
     _bin = find_ollama_binary()
     installed_models = list_ollama_models(_bin) if _bin else []
     # Combine installed + known models; installed ones appear first, marked with ✅
@@ -2290,14 +2301,26 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
 
         if completed_normally:
             total_exec = runs_done * len(scenarios)
-            st.success(f"🎉 Automação concluída! {total_exec:,} execuções com {len(selected_models)} modelo(s) × {last_iteration_idx + 1} iterações.")
             add_activity("🎉", f"Automação concluída: {total_exec:,} execuções totais")
             logger.info(f"🎉 Automação finalizada: {total_exec} execuções")
+            st.session_state["auto_last_result"] = {
+                "completed": True,
+                "total_exec": total_exec,
+                "models_count": len(selected_models),
+                "iterations": last_iteration_idx + 1,
+            }
         else:
             total_exec = runs_done * len(scenarios)
-            reason = getattr(st.session_state, "stop_reason", "pelo usuário")
-            st.warning(f"⏹️ Automação interrompida após {total_exec:,} execuções.")
             add_activity("⏹️", f"Automação interrompida: {total_exec:,} execuções realizadas")
+            st.session_state["auto_last_result"] = {
+                "completed": False,
+                "total_exec": total_exec,
+                "models_count": len(selected_models),
+                "iterations": last_iteration_idx + 1,
+            }
+        # Trigger a clean rerun to clear accumulated UI state from the long automation.
+        # This prevents a giant WebSocket flush that causes browser disconnect / white screen.
+        st.rerun()
 
 
 # ---------------------------------------------------------------------------

@@ -1,8 +1,13 @@
 # ============================================================
 # TCC MVP - Script de Instalação e Verificação (Windows)
 # Autor: TCC Automatizado
-# Uso: .\install.ps1
+# Uso: .\install.ps1          (só verifica dependências)
+#      .\install.ps1 -Launch  (verifica e inicia o dashboard)
 # ============================================================
+
+param(
+    [switch]$Launch
+)
 
 $ErrorActionPreference = "Stop"
 $Host.UI.RawUI.WindowTitle = "TCC MVP - Instalação"
@@ -35,7 +40,7 @@ Write-Step "Instalando dependências Python (requirements.txt)..."
 try {
     python -m pip install --upgrade pip --quiet
     python -m pip install -r requirements.txt --quiet
-    Write-OK "streamlit, plotly, requests, psycopg2-binary instalados"
+    Write-OK "streamlit, plotly, psycopg2-binary instalados"
 } catch {
     Write-FAIL "Erro ao instalar dependências: $_"
     exit 1
@@ -149,3 +154,8 @@ Write-Host ""
 Write-Host "Para iniciar o dashboard:" -ForegroundColor White
 Write-Host "  streamlit run dashboard.py" -ForegroundColor Green
 Write-Host ""
+
+if ($Launch) {
+    Write-Host "Iniciando dashboard..." -ForegroundColor Cyan
+    streamlit run dashboard.py
+}
