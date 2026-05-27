@@ -101,7 +101,8 @@ def _run_cmd(args: list[str], timeout: int = 5, shell: bool = False) -> str:
     """Run a shell command and return stdout, empty string on failure."""
     import platform
     try:
-        kwargs = dict(capture_output=True, text=True, timeout=timeout, shell=shell)
+        kwargs = dict(capture_output=True, text=True, timeout=timeout, shell=shell,
+                      encoding="utf-8", errors="replace")
         # Windows: suppress console popup window
         if platform.system() == "Windows":
             si = subprocess.STARTUPINFO()
@@ -190,19 +191,19 @@ def detect_npu() -> str | None:
 
     # --- Windows: check Device Manager for Intel NPU ---
     if _os == "Windows":
-        # Intel NPU appears as "Intel(R) AI Boost" or "NPU" in PnP devices
+        # Filter by device class to avoid matching keyboards/mice
+        # Intel AI Boost NPU is class "System" or "SoftwareDevice"
         out = _run_cmd(["powershell", "-NoProfile", "-Command",
-                        "Get-PnpDevice -FriendlyName '*NPU*','*Neural*','*AI Boost*' -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FriendlyName"],
+                        "Get-PnpDevice -ErrorAction SilentlyContinue | "
+                        "Where-Object { $_.FriendlyName -match 'NPU|Neural|AI Boost' -and "
+                        "$_.Class -notmatch 'Keyboard|Mouse|HIDClass|Monitor|USB' } | "
+                        "Select-Object -First 1 -ExpandProperty FriendlyName"],
                        timeout=10)
         if out:
-            return out.splitlines()[0].strip()
-        # Also try wmic
-        out2 = _run_cmd(["wmic", "path", "Win32_PnPEntity", "where",
-                         "Name like '%NPU%' or Name like '%Neural%' or Name like '%AI Boost%'",
-                         "get", "Name", "/value"])
-        for line in out2.splitlines():
-            if line.startswith("Name="):
-                return line.split("=", 1)[1].strip()
+            name = out.splitlines()[0].strip()
+            # Extra guard: reject names with known non-NPU brands
+            if not any(x in name.lower() for x in ["corsair", "logitech", "razer", "steelseries"]):
+                return name
 
     # --- Linux ---
     if _os == "Linux":
@@ -282,9 +283,11 @@ def detect_os() -> str:
 
 
 def detect_compute_unit(npu: str | None, gpu: str | None) -> str:
-    """Return 'NPU', 'GPU', or 'CPU' based on available hardware."""
-    if npu:
-        return "NPU"
+    """Return 'GPU' or 'CPU' based on what Ollama actually uses.
+    
+    Ollama does NOT support NPU inference — it uses CUDA (GPU) or CPU.
+    NPU is stored separately as informational data for the TCC research.
+    """
     if gpu:
         return "GPU"
     return "CPU"
@@ -346,11 +349,20 @@ def get_or_create_hw_entry(catalog: dict, detected: dict) -> str:
     # Match by CPU + OS fingerprint
     for hw_id, entry in catalog["machines"].items():
         if entry.get("cpu") == detected["cpu"] and entry.get("os") == detected["os"]:
-            # Update compute_unit and gpu in case hardware changed
-            entry["compute_unit"] = detected.get("compute_unit", entry.get("compute_unit", "cpu"))
-            if detected.get("gpu"):
+            # Update compute_unit and gpu only if changed (avoid file write → reload loop)
+            changed = False
+            new_cu = detected.get("compute_unit", entry.get("compute_unit", "cpu"))
+            if entry.get("compute_unit") != new_cu:
+                entry["compute_unit"] = new_cu
+                changed = True
+            if detected.get("gpu") and entry.get("gpu") != detected["gpu"]:
                 entry["gpu"] = detected["gpu"]
-            save_hardware_catalog(catalog)
+                changed = True
+            if detected.get("npu") and entry.get("npu") != detected.get("npu"):
+                entry["npu"] = detected["npu"]
+                changed = True
+            if changed:
+                save_hardware_catalog(catalog)
             return hw_id
     # Create a new auto entry with descriptive label
     idx = len(catalog["machines"]) + 1
@@ -511,7 +523,8 @@ def run_terraform_step(scenario_path: str, step: str) -> dict:
     cmd = commands[step]
     env = os.environ.copy()
     env["TF_IN_AUTOMATION"] = "1"
-    result = subprocess.run(cmd, cwd=scenario_path, capture_output=True, text=True, env=env, check=False)
+    result = subprocess.run(cmd, cwd=scenario_path, capture_output=True, text=True,
+                           env=env, check=False, encoding="utf-8", errors="replace")
     return {
         "step": step,
         "command": " ".join(cmd),
@@ -538,6 +551,7 @@ def get_docker_container_logs(container_name: str) -> str:
         result = subprocess.run(
             cmd,
             capture_output=True, text=True, check=False, timeout=10,
+            encoding="utf-8", errors="replace",
         )
         logs = ""
         if result.stdout.strip():
@@ -556,6 +570,7 @@ def terraform_cleanup(scenario_path: str) -> str:
     result = subprocess.run(
         ["terraform", "destroy", "-auto-approve", "-no-color"],
         cwd=scenario_path, capture_output=True, text=True, env=env, check=False, timeout=60,
+        encoding="utf-8", errors="replace",
     )
     if result.returncode == 0:
         return "✅ Recursos limpos com terraform destroy"
@@ -666,6 +681,7 @@ def validate_ai_suggestion(scenario: dict, ai_response: str) -> tuple[str, str]:
                 ["terraform", "init", "-input=false", "-no-color", "-backend=false"],
                 cwd=tmpdir, capture_output=True, text=True,
                 env=env, check=False, timeout=30,
+                encoding="utf-8", errors="replace",
             )
             if init_result.returncode != 0:
                 err = (init_result.stderr or init_result.stdout or "").strip()[:200]
@@ -676,6 +692,7 @@ def validate_ai_suggestion(scenario: dict, ai_response: str) -> tuple[str, str]:
                 ["terraform", "validate", "-no-color"],
                 cwd=tmpdir, capture_output=True, text=True,
                 env=env, check=False, timeout=15,
+                encoding="utf-8", errors="replace",
             )
             if val_result.returncode == 0:
                 return ("aprovado", "Codigo sugerido pela IA passou em terraform validate")
@@ -2384,7 +2401,9 @@ def main():
     )
     st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
     _init_activity_log()
-    add_activity("🔬", "Dashboard carregado") if not st.session_state.activity_log else None
+    if not st.session_state.get("_dashboard_loaded"):
+        add_activity("🔬", "Dashboard carregado")
+        st.session_state["_dashboard_loaded"] = True
 
     # --- Hardware detection (once per session) ---
     if "hw_snapshot" not in st.session_state:
