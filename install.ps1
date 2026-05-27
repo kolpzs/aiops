@@ -177,7 +177,9 @@ gatherUsageStats = false
 [runner]
 fastReruns = false
 "@
-    Set-Content -Path $configFile -Value $tomlContent -Encoding UTF8
+    # Use .NET to write UTF-8 WITHOUT BOM — PowerShell 5.x Set-Content adds BOM
+    # which can cause TOML parse errors in some tools.
+    [System.IO.File]::WriteAllText($configFile, $tomlContent, [System.Text.UTF8Encoding]::new($false))
     Write-OK "Criado .streamlit\config.toml"
 } else {
     Write-OK ".streamlit\config.toml ja existe"
