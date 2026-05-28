@@ -2,6 +2,7 @@
   "machines": {
     "machine-01": {
       "label": "kolpzs (i7-13620H)",
+      "hostname": "kolpzs",
       "cpu": "13th Gen Intel(R) Core(TM) i7-13620H",
       "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
       "npu": "",
@@ -10,6 +11,18 @@
       "compute_unit": "GPU",
       "notes": "Auto-detectado na inicialização",
       "registered_at": "2026-05-27T09:27:01.009622"
+    },
+    "machine-02": {
+      "label": "DESKTOP-J1PLS6N (285K)",
+      "hostname": "DESKTOP-J1PLS6N",
+      "cpu": "Intel(R) Core(TM) Ultra 9 285K",
+      "gpu": "NVIDIA GeForce RTX 5070",
+      "npu": "Intel(R) AI Boost",
+      "ram_gb": 63,
+      "os": "Windows 10.0.26200",
+      "compute_unit": "GPU",
+      "notes": "Auto-detectado na inicialização",
+      "registered_at": "2026-05-27T16:52:37.143717"
     }
   }
 }

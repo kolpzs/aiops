@@ -868,6 +868,16 @@ def load_csv_results() -> list[dict]:
         return list(csv.DictReader(f))
 
 
+def safe_dataframe(data, **kwargs):
+    """Render st.dataframe replacing NaN/None to avoid JSON serialization errors."""
+    import pandas as pd
+    df = pd.DataFrame(data)
+    # Drop columns with NaN/None names (caused by CSV rows with extra fields)
+    df = df.loc[:, df.columns.notna()]
+    df = df.fillna("")
+    st.dataframe(df, **kwargs)
+
+
 # ---------------------------------------------------------------------------
 # Activity Log (session-based)
 # ---------------------------------------------------------------------------
@@ -1408,7 +1418,7 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
                     "Tokens": r["tokens_estimados"],
                     "Status": "✅" if r["status"].startswith("failure-captured") else "⚠️",
                 })
-            st.dataframe(summary_data, width="stretch", hide_index=True)
+            safe_dataframe(summary_data, width="stretch", hide_index=True)
 
         stop_btn_placeholder.empty()
 
@@ -1694,7 +1704,7 @@ def render_results_tab():
         stats_table.append(calc_stats([int(r["tokens_estimados"]) / float(r["tempo_ia_s"])
                         for r in m_rows if float(r["tempo_ia_s"]) > 0 and int(r["tokens_estimados"]) > 0], "Tokens/segundo", m_name))
 
-    st.dataframe([s for s in stats_table if s], width="stretch", hide_index=True)
+    safe_dataframe([s for s in stats_table if s], width="stretch", hide_index=True)
 
     # ── Estatísticas por Modelo (resumo compacto) ────────────────────────────
     st.markdown("### Estatísticas por Modelo")
@@ -1720,7 +1730,7 @@ def render_results_tab():
             "Tokens Médio": f"{mean(m_tokens):.0f}" if m_tokens else "N/A",
             "Tok/s Médio": f"{mean(m_tps):.1f}" if m_tps else "N/A",
         })
-    st.dataframe(model_stats, width="stretch", hide_index=True)
+    safe_dataframe(model_stats, width="stretch", hide_index=True)
 
     st.markdown("---")
 
@@ -2077,7 +2087,7 @@ def render_results_tab():
 
     # --- Tabela histórico + download CSV + PDF ---
     st.markdown("### Historico completo")
-    st.dataframe(data, width="stretch", hide_index=True)
+    safe_dataframe(data, width="stretch", hide_index=True)
 
     dl_col1, dl_col2 = st.columns(2)
 
@@ -2169,9 +2179,16 @@ def render_automation_tab(scenarios: list[dict], ollama_url: str, timeout: int, 
         )
         stop_datetime = None
         if stop_criteria in ("Por data/hora", "O que acontecer primeiro"):
-            stop_date = st.date_input("Data de parada", key="auto_stop_date")
-            stop_time_val = st.time_input("Hora de parada", value=_dt_module.time(8, 0), key="auto_stop_time")
+            tomorrow = _dt_module.date.today() + _dt_module.timedelta(days=1)
+            stop_date = st.date_input("Data de parada", value=tomorrow, key="auto_stop_date")
+            stop_time_val = st.time_input("Hora de parada", value=_dt_module.time(7, 30), key="auto_stop_time")
             stop_datetime = _dt_module.datetime.combine(stop_date, stop_time_val)
+            if stop_datetime <= _dt_module.datetime.now():
+                st.warning(f"⚠️ O horário de parada ({stop_datetime.strftime('%d/%m/%Y %H:%M')}) já passou! A automação vai parar imediatamente ao iniciar.")
+            else:
+                delta = stop_datetime - _dt_module.datetime.now()
+                hours_left = delta.total_seconds() / 3600
+                st.caption(f"⏱️ Tempo restante até parada: ~{hours_left:.1f}h ({stop_datetime.strftime('%d/%m/%Y %H:%M')})")
     with cfg2:
         st.info(
             f"📊 **Total estimado de execuções:**\n\n"
@@ -2363,8 +2380,32 @@ def render_reports_tab():
 def render_hardware_tab():
     st.subheader("💻 Hardware Registrado")
 
-    hw_snapshot = st.session_state.get("hw_snapshot", {})
+    hw_snapshot = st.session_state.get("hw_snapshot")
     catalog = st.session_state.get("hw_catalog", load_hardware_catalog())
+
+    # Manual detection button
+    st.markdown("### 🔍 Detectar Hardware desta Máquina")
+    if st.button("🔍 Detectar Hardware Automaticamente", key="btn_detect_hw", type="primary"):
+        with st.spinner("Detectando hardware (pode levar alguns segundos)..."):
+            try:
+                import socket as _socket
+                detected = detect_hardware_snapshot()
+                hw_id = get_or_create_hw_entry(catalog, detected)
+                detected["hw_id"] = hw_id
+                detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
+                # Ensure hostname is saved
+                entry = catalog["machines"][hw_id]
+                if not entry.get("hostname"):
+                    entry["hostname"] = _socket.gethostname()
+                    save_hardware_catalog(catalog)
+                st.session_state["hw_snapshot"] = detected
+                st.session_state["hw_catalog"] = catalog
+                add_activity("💻", f"Hardware detectado: {detected.get('label','?')}")
+                st.success(f"✅ Hardware detectado: **{detected.get('label','?')}**")
+                st.rerun()
+            except Exception as e:
+                st.error(f"❌ Falha na detecção: {e}")
+                add_activity("⚠️", f"Falha na detecção de hardware: {e}")
 
     # Current machine banner
     if hw_snapshot:
@@ -2395,7 +2436,7 @@ def render_hardware_tab():
                 "Compute": m.get("compute_unit", "cpu").upper(),
                 "Registrada em": m.get("registered_at", "?")[:10],
             })
-        st.dataframe(rows, width="stretch")
+        safe_dataframe(rows, width="stretch")
     else:
         st.caption("Nenhuma máquina registrada ainda.")
 
@@ -2454,25 +2495,24 @@ def main():
         add_activity("🔬", "Dashboard carregado")
         st.session_state["_dashboard_loaded"] = True
 
-    # --- Hardware detection (once per session) ---
-    # On WebSocket reconnect (after long automation), session_state is cleared.
-    # We check hardware.json by hostname first to avoid re-running WMI/PowerShell,
-    # which can hang and crash the Streamlit server.
+    # --- Hardware: load from JSON only (no auto-detection) ---
+    # Detection is manual via the "Hardware" tab button to avoid WMI hangs.
     if "hw_snapshot" not in st.session_state:
         import socket as _socket
         hostname = _socket.gethostname()
         catalog = load_hardware_catalog()
 
-        # Fast path: find cached entry by hostname (skips all WMI queries)
+        # Find cached entry by hostname or label
         cached_id, cached_entry = None, None
         for _hw_id, _entry in catalog["machines"].items():
             if (_entry.get("hostname") == hostname or
-                    _entry.get("label", "").startswith(hostname + " ")):
+                    _entry.get("label", "").startswith(hostname + " ") or
+                    _entry.get("label", "").startswith(hostname + "(")):
                 cached_id, cached_entry = _hw_id, _entry
                 break
 
         if cached_entry:
-            detected = {
+            st.session_state["hw_snapshot"] = {
                 "cpu": cached_entry.get("cpu", "Unknown"),
                 "gpu": cached_entry.get("gpu", ""),
                 "npu": cached_entry.get("npu", ""),
@@ -2482,27 +2522,10 @@ def main():
                 "hw_id": cached_id,
                 "label": cached_entry.get("label", cached_id),
             }
-            st.session_state["hw_snapshot"] = detected
-            st.session_state["hw_catalog"] = catalog
-            add_activity("💻", f"Hardware carregado: {detected.get('label','?')}")
         else:
-            # Slow path: run full hardware detection (WMI/PowerShell) for new machines
-            try:
-                detected = detect_hardware_snapshot()
-                hw_id = get_or_create_hw_entry(catalog, detected)
-                detected["hw_id"] = hw_id
-                detected["label"] = catalog["machines"][hw_id].get("label", hw_id)
-                st.session_state["hw_snapshot"] = detected
-                st.session_state["hw_catalog"] = catalog
-                add_activity("💻", f"Hardware detectado: {detected.get('label','?')}")
-            except Exception as _hw_err:
-                st.session_state["hw_snapshot"] = {
-                    "cpu": "Unknown", "gpu": "", "npu": "", "ram_gb": 0,
-                    "os": "Unknown", "compute_unit": "CPU", "hw_id": "unknown",
-                    "label": "unknown",
-                }
-                st.session_state["hw_catalog"] = {"machines": {}}
-                add_activity("⚠️", f"Falha na detecção de hardware: {_hw_err}")
+            st.session_state["hw_snapshot"] = None
+
+        st.session_state["hw_catalog"] = catalog
 
     hw_snapshot = st.session_state["hw_snapshot"]
 
