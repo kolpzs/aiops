@@ -1426,11 +1426,134 @@ def render_run_all_tab(scenarios: list[dict], model: str, ollama_url: str, timeo
 # ---------------------------------------------------------------------------
 # PDF Export helper
 # ---------------------------------------------------------------------------
+class PlotlyImageExportUnavailable(RuntimeError):
+    """Raised when Plotly static image export is not available in the environment."""
+
+
+def _safe_export_name(title: str) -> str:
+    name = title.lower()
+    name = re.sub(r"[^a-z0-9]+", "-", name)
+    name = name.strip("-")
+    return name or "grafico"
+
+
+def _plotly_fig_to_png(fig, width: int = 1100, height: int = 520) -> bytes:
+    """Export a Plotly figure to PNG, surfacing the Chrome/Kaleido requirement clearly."""
+    try:
+        return fig.to_image(format="png", width=width, height=height)
+    except (ValueError, RuntimeError) as exc:
+        message = str(exc)
+        if "Chrome" in message or "Kaleido" in message or "kaleido" in message:
+            raise PlotlyImageExportUnavailable(
+                "Exportação PNG automática indisponível: o Plotly/Kaleido precisa de "
+                "Chrome/Chromium no backend, mesmo que você use Firefox como navegador. "
+                "Use o download HTML abaixo e abra no Firefox, ou use o botão de câmera "
+                "do próprio gráfico para baixar PNG pelo navegador."
+            ) from exc
+        raise
+
+
+def _plotly_fig_to_html(fig) -> bytes:
+    return fig.to_html(include_plotlyjs="cdn", full_html=True).encode("utf-8")
+
+
+def _plotly_chart_config(title: str) -> dict:
+    return {
+        "displaylogo": False,
+        "toImageButtonOptions": {
+            "format": "png",
+            "filename": _safe_export_name(title),
+            "height": 700,
+            "width": 1200,
+            "scale": 2,
+        },
+    }
+
+
+def _render_plotly_chart(fig, title: str, key: str, *, height: int = 520) -> None:
+    st.plotly_chart(fig, width="stretch", config=_plotly_chart_config(title))
+
+    safe_name = _safe_export_name(title)
+    export_key = f"chart_export_{key}"
+    png_key = f"{export_key}_png"
+    err_key = f"{export_key}_error"
+
+    with st.expander(f"⬇️ Baixar gráfico: {title}", expanded=False):
+        st.caption(
+            "O HTML abre normalmente no Firefox. Para PNG direto sem instalar Chrome/Chromium, "
+            "use o botão de câmera no canto superior direito do gráfico."
+        )
+        col_html, col_png = st.columns(2)
+        with col_html:
+            st.download_button(
+                "Baixar HTML interativo",
+                data=_plotly_fig_to_html(fig),
+                file_name=f"{safe_name}.html",
+                mime="text/html",
+                key=f"{export_key}_html",
+                width="stretch",
+            )
+        with col_png:
+            if st.button(
+                "Preparar PNG",
+                key=f"{export_key}_prepare_png",
+                width="stretch",
+                help="Opcional: usa Kaleido no servidor e pode exigir Chrome/Chromium instalado.",
+            ):
+                try:
+                    st.session_state[png_key] = _plotly_fig_to_png(fig, width=1200, height=height)
+                    st.session_state.pop(err_key, None)
+                except PlotlyImageExportUnavailable as exc:
+                    st.session_state.pop(png_key, None)
+                    st.session_state[err_key] = str(exc)
+
+            if png_key in st.session_state:
+                st.download_button(
+                    "Baixar PNG",
+                    data=st.session_state[png_key],
+                    file_name=f"{safe_name}.png",
+                    mime="image/png",
+                    key=f"{export_key}_png_download",
+                    width="stretch",
+                )
+            elif err_key in st.session_state:
+                st.info(st.session_state[err_key])
+
+
+def _add_pdf_chart_or_notice(pdf, fig, title: str, image_width: int = 900, image_height: int = 400) -> None:
+    import tempfile
+
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(0, 9, title, new_x="LMARGIN", new_y="NEXT")
+
+    try:
+        img_bytes = _plotly_fig_to_png(fig, width=image_width, height=image_height)
+    except PlotlyImageExportUnavailable as exc:
+        pdf.set_font("Helvetica", "", 10)
+        pdf.multi_cell(
+            0,
+            6,
+            (
+                "Este grafico nao foi incluido porque a exportacao de imagens "
+                f"nao esta disponivel neste ambiente.\n\n{exc}"
+            ),
+        )
+        return
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        tmp.write(img_bytes)
+        tmp_path = tmp.name
+    try:
+        pdf.image(tmp_path, x=10, y=None, w=190)
+    finally:
+        os.unlink(tmp_path)
+
+
 def _generate_results_pdf(data, ai_rows_clean, models_sorted, colors):
     """Build a PDF report from the results tab data and charts."""
-    import io
     import plotly.graph_objects as go
-    from statistics import mean, median, mode, stdev
+    from statistics import mean, median, mode
     from fpdf import FPDF
 
     pdf = FPDF()
@@ -1468,10 +1591,6 @@ def _generate_results_pdf(data, ai_rows_clean, models_sorted, colors):
 
     pdf.ln(6)
 
-    # ── Charts ─────────────────────────────────────────────────────────────────
-    def _fig_to_bytes(fig):
-        return fig.to_image(format="png", width=900, height=400, engine="kaleido")
-
     # Box plot — response time
     fig_box = go.Figure()
     for idx, m in enumerate(models_sorted):
@@ -1488,19 +1607,7 @@ def _generate_results_pdf(data, ai_rows_clean, models_sorted, colors):
     fig_violin.update_layout(title="Violin Plot - Tokens por Modelo", yaxis_title="Tokens estimados", height=400)
 
     for fig, title in [(fig_box, "Box Plot - Tempo de Resposta"), (fig_violin, "Violin Plot - Tokens")]:
-        img_bytes = _fig_to_bytes(fig)
-        img_buf = io.BytesIO(img_bytes)
-        pdf.add_page()
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(0, 9, title, new_x="LMARGIN", new_y="NEXT")
-        # Save temp image
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-            tmp.write(img_bytes)
-            tmp_path = tmp.name
-        pdf.image(tmp_path, x=10, y=None, w=190)
-        import os as _os
-        _os.unlink(tmp_path)
+        _add_pdf_chart_or_notice(pdf, fig, title)
 
     # Per-model histograms
     for idx, m in enumerate(models_sorted):
@@ -1514,19 +1621,9 @@ def _generate_results_pdf(data, ai_rows_clean, models_sorted, colors):
         fig_h.add_vline(x=m_mean, line_dash="dash", line_color="#1E88E5", line_width=2,
                         annotation_text=f"Media: {m_mean:.1f}s")
         fig_h.add_vline(x=m_median, line_dash="dot", line_color="#43A047", line_width=2,
-                        annotation_text=f"Mediana: {m_median:.1f}s")
+                         annotation_text=f"Mediana: {m_median:.1f}s")
         fig_h.update_layout(title=f"Histograma - {m}", xaxis_title="Tempo (s)", yaxis_title="Frequencia", height=350)
-        img_bytes = _fig_to_bytes(fig_h)
-        import tempfile
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-            tmp.write(img_bytes)
-            tmp_path = tmp.name
-        pdf.add_page()
-        pdf.set_font("Helvetica", "B", 11)
-        pdf.cell(0, 9, f"Histograma - {m}", new_x="LMARGIN", new_y="NEXT")
-        pdf.image(tmp_path, x=10, y=None, w=190)
-        import os as _os
-        _os.unlink(tmp_path)
+        _add_pdf_chart_or_notice(pdf, fig_h, f"Histograma - {m}", image_width=900, image_height=350)
 
     return bytes(pdf.output())
 
@@ -1543,7 +1640,6 @@ def render_results_tab():
 
     try:
         from fpdf import FPDF
-        import kaleido  # noqa: F401
         HAS_PDF = True
     except ImportError:
         HAS_PDF = False
@@ -1770,7 +1866,7 @@ def render_results_tab():
         showlegend=False,
         yaxis=dict(range=[0, time_cap]),
     )
-    st.plotly_chart(fig_box, width="stretch")
+    _render_plotly_chart(fig_box, "01 Box Plot - Tempo de Resposta da IA por Modelo", "box_tempo_ia", height=520)
 
     st.markdown("---")
 
@@ -1796,7 +1892,7 @@ def render_results_tab():
         showlegend=False,
         yaxis=dict(range=[0, token_cap]),
     )
-    st.plotly_chart(fig_violin, width="stretch")
+    _render_plotly_chart(fig_violin, "02 Violin Plot - Distribuicao de Tokens por Modelo", "violin_tokens", height=520)
 
     st.markdown("---")
 
@@ -1838,7 +1934,12 @@ def render_results_tab():
             margin=dict(t=50, b=40),
             showlegend=False,
         )
-        st.plotly_chart(fig_hist_m, width="stretch")
+        _render_plotly_chart(
+            fig_hist_m,
+            f"025 Histograma - Tempo de Resposta - {m}",
+            f"hist_tempo_{_safe_export_name(m)}",
+            height=460,
+        )
 
     st.markdown("---")
 
@@ -1871,7 +1972,7 @@ def render_results_tab():
         margin=dict(t=30, b=40),
         legend=dict(orientation="h", y=-0.15),
     )
-    st.plotly_chart(fig_hist, width="stretch")
+    _render_plotly_chart(fig_hist, "03 Histograma - Eficiencia Tokens por Segundo", "hist_tokens_segundo", height=520)
 
     st.markdown("---")
 
@@ -1905,7 +2006,7 @@ def render_results_tab():
         xaxis_title="Cenário",
         yaxis_title="Modelo",
     )
-    st.plotly_chart(fig_heat, width="stretch")
+    _render_plotly_chart(fig_heat, "04 Heatmap - Tempo Medio da IA por Modelo e Cenario", "heat_tempo_ia", height=460)
 
     st.markdown("---")
 
@@ -1938,7 +2039,7 @@ def render_results_tab():
         xaxis_title="Cenário",
         yaxis_title="Modelo",
     )
-    st.plotly_chart(fig_heat2, width="stretch")
+    _render_plotly_chart(fig_heat2, "05 Heatmap - Tokens Gerados por Modelo e Cenario", "heat_tokens", height=460)
 
     st.markdown("---")
 
@@ -1971,7 +2072,7 @@ def render_results_tab():
         margin=dict(t=30, b=60),
         legend=dict(orientation="h", y=-0.2),
     )
-    st.plotly_chart(fig_grouped, width="stretch")
+    _render_plotly_chart(fig_grouped, "06 Barras - Eficiencia por Modelo e Cenario", "barras_eficiencia", height=520)
 
     st.markdown("---")
 
@@ -1993,7 +2094,7 @@ def render_results_tab():
         margin=dict(t=30, b=40),
         showlegend=False,
     )
-    st.plotly_chart(fig_tf_box, width="stretch")
+    _render_plotly_chart(fig_tf_box, "07 Box Plot - Tempo Terraform por Cenario", "box_terraform", height=520)
 
     st.markdown("---")
 
@@ -2020,7 +2121,7 @@ def render_results_tab():
         xaxis=dict(range=[0, time_cap]),
         yaxis=dict(range=[0, token_cap]),
     )
-    st.plotly_chart(fig_scatter, width="stretch")
+    _render_plotly_chart(fig_scatter, "08 Scatter - Tempo de IA vs Tokens Gerados", "scatter_tempo_tokens", height=540)
 
     st.markdown("---")
 
@@ -2081,7 +2182,7 @@ def render_results_tab():
         margin=dict(t=50, b=50),
         legend=dict(orientation="h", y=-0.12, font=dict(size=12)),
     )
-    st.plotly_chart(fig_radar, width="stretch")
+    _render_plotly_chart(fig_radar, "09 Radar - Perfil Comparativo dos Modelos", "radar_modelos", height=620)
 
     st.markdown("---")
 
@@ -2104,18 +2205,26 @@ def render_results_tab():
 
     with dl_col2:
         if HAS_PDF and HAS_PLOTLY:
+            st.caption(
+                "O PDF é gerado mesmo sem Chrome/Chromium. Se o Kaleido não conseguir exportar PNG, "
+                "os gráficos serão substituídos por um aviso no PDF."
+            )
             if st.button("Gerar PDF dos Resultados", width="stretch"):
                 with st.spinner("Gerando PDF..."):
-                    pdf_bytes = _generate_results_pdf(data, ai_rows_clean, models_sorted, colors)
-                st.download_button(
-                    "Baixar PDF",
-                    data=pdf_bytes,
-                    file_name="resultados_tcc_mvp.pdf",
-                    mime="application/pdf",
-                    width="stretch",
-                )
+                    try:
+                        pdf_bytes = _generate_results_pdf(data, ai_rows_clean, models_sorted, colors)
+                    except Exception as exc:
+                        st.error(f"Não foi possível gerar o PDF: {exc}")
+                    else:
+                        st.download_button(
+                            "Baixar PDF",
+                            data=pdf_bytes,
+                            file_name="resultados_tcc_mvp.pdf",
+                            mime="application/pdf",
+                            width="stretch",
+                        )
         else:
-            st.info("Instale fpdf2 e kaleido para exportar PDF.")
+            st.info("Instale fpdf2 para exportar PDF.")
 
 
 # ---------------------------------------------------------------------------

@@ -1,5 +1,8 @@
 streamlit>=1.30.0
 plotly>=5.0.0
+fpdf2>=2.7.0
+kaleido>=1.0.0
 psycopg2-binary>=2.9.0
 # psycopg2-binary is optional — only needed for PostgreSQL results storage.
+# kaleido is optional for server-side PNG export; interactive HTML export works in Firefox.
 # requests and pandas are NOT required; the dashboard uses urllib from stdlib.
